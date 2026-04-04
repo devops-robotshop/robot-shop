@@ -28,10 +28,17 @@ jobs:
 
       # Authenticate via Workload Identity Federation
       - name: Authenticate to GCP
+        id: auth
         uses: google-github-actions/auth@v2
         with:
           workload_identity_provider: "projects/460877708164/locations/global/workloadIdentityPools/github-pool/providers/github-provider"
           service_account: "robot-shop-gsa@project-669c83f6-d64c-4648-b15.iam.gserviceaccount.com"
+          token_format: "access_token"
+
+      - name: Debug - Check authenticated identity
+        run: |
+          gcloud auth list
+          gcloud config get-value account
 
       - name: Set up Cloud SDK
         uses: google-github-actions/setup-gcloud@v2
@@ -40,8 +47,7 @@ jobs:
 
       - name: Configure Docker for Artifact Registry
         run: |
-          gcloud auth configure-docker ${{ env.REGION }}-docker.pkg.dev --quiet
-          gcloud auth print-access-token | docker login \
+          echo "${{ steps.auth.outputs.access_token }}" | docker login \
             -u oauth2accesstoken \
             --password-stdin \
             ${{ env.REGION }}-docker.pkg.dev
