@@ -26,7 +26,7 @@ jobs:
       - name: Checkout source code
         uses: actions/checkout@v4
 
-      # Authenticate via Workload Identity Federation
+      # Authenticate via Workload Identity Federation (no SA key needed)
       - name: Authenticate to GCP
         id: auth
         uses: google-github-actions/auth@v2
@@ -40,6 +40,7 @@ jobs:
         with:
           project_id: ${{ env.PROJECT_ID }}
 
+      # Login to Artifact Registry using access token
       - name: Configure Docker for Artifact Registry
         uses: docker/login-action@v3
         with:
@@ -75,12 +76,24 @@ jobs:
           docker push \
             ${{ env.REGISTRY }}/${{ env.PROJECT_ID }}/${{ env.REPO }}/${{ env.IMAGE_NAME }}:${{ github.sha }}
 
-      # Update Helm values → ArgoCD auto-syncs new tag
-      # - name: Update image tag in Helm values
-      #   run: |
-      #     sed -i "s|version: .*|version: \"${{ github.sha }}\"|g" K8s/helm/values.yaml
-      #     git config user.name "github-actions[bot]"
-      #     git config user.email "github-actions[bot]@users.noreply.github.com"
-      #     git add K8s/helm/values.yaml
-      #     git diff --staged --quiet || git commit -m "ci: bump image version to ${{ github.sha }}"
-      #     git push
+      # Update web image via ArgoCD parameter override — does not touch values.yaml
+      - name: Install ArgoCD CLI
+        run: |
+          curl -sSL -o argocd \
+            https://github.com/argoproj/argo-cd/releases/latest/download/argocd-linux-amd64
+          chmod +x argocd
+          sudo mv argocd /usr/local/bin/
+
+      - name: Deploy web image via ArgoCD
+        run: |
+          argocd login ${{ secrets.ARGOCD_SERVER }} \
+            --username admin \
+            --password ${{ secrets.ARGOCD_PASSWORD }} \
+            --insecure
+
+          argocd app set robot-shop \
+            --helm-set web.image=${{ env.REGISTRY }}/${{ env.PROJECT_ID }}/${{ env.REPO }}/${{ env.IMAGE_NAME }} \
+            --helm-set web.version=${{ github.sha }}
+
+          argocd app sync robot-shop
+          argocd app wait robot-shop --health --timeout 120
