@@ -1,0 +1,66 @@
+name: CI/CD Pipeline - Robot Shop
+
+on:
+  push:
+    branches:
+      - master
+      - develop
+
+env:
+  PROJECT_ID: project-669c83f6-d64c-4648-b15
+  REGION: asia-southeast1
+  REGISTRY: asia-southeast1-docker.pkg.dev
+  REPO: robot-shop
+  IMAGE_NAME: web
+
+jobs:
+  build-scan-deploy:
+    name: Build → Scan → Deploy
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout source code
+        uses: actions/checkout@v4
+
+      - name: Authenticate to GCP
+        uses: google-github-actions/auth@v2
+        with:
+          credentials_json: ${{ secrets.GCP_SA_KEY }}
+
+      - name: Set up Cloud SDK
+        uses: google-github-actions/setup-gcloud@v2
+
+      - name: Configure Docker for Artifact Registry
+        run: gcloud auth configure-docker ${{ env.REGION }}-docker.pkg.dev --quiet
+
+      # Build
+      - name: Build Docker image
+        run: |
+          docker build \
+            -t ${{ env.REGISTRY }}/${{ env.PROJECT_ID }}/${{ env.REPO }}/${{ env.IMAGE_NAME }}:${{ github.sha }} \
+            ./${{ env.IMAGE_NAME }}
+
+      # Security gate — pipeline stops if HIGH/CRITICAL found
+      - name: Scan image with Trivy
+        uses: aquasecurity/trivy-action@master
+        with:
+          image-ref: ${{ env.REGISTRY }}/${{ env.PROJECT_ID }}/${{ env.REPO }}/${{ env.IMAGE_NAME }}:${{ github.sha }}
+          format: table
+          exit-code: 1
+          severity: HIGH,CRITICAL
+
+      # Push only if Trivy passes
+      - name: Push image to Artifact Registry
+        run: |
+          docker push \
+            ${{ env.REGISTRY }}/${{ env.PROJECT_ID }}/${{ env.REPO }}/${{ env.IMAGE_NAME }}:${{ github.sha }}
+
+      # Update Helm values → ArgoCD auto-syncs new tag
+      - name: Update image tag in Helm values
+        run: |
+          sed -i "s|tag:.*|tag: \"${{ github.sha }}\"|g" K8s/helm/values.yaml
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add K8s/helm/values.yaml
+          git commit -m "ci: bump web image tag to ${{ github.sha }}"
+          git push
