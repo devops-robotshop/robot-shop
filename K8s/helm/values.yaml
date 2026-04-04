@@ -2,7 +2,7 @@
 # Default is docker/robotshop/image:latest
 image:
   repo: robotshop
-  version: latest
+  version: "e0556d4806d9277fa0669e407fb53115a28bb303"
   pullPolicy: IfNotPresent
 
 # EUM configuration
