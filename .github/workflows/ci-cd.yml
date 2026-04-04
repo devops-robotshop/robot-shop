@@ -65,7 +65,13 @@ jobs:
 
       # Push only if Trivy passes
       - name: Push image to Artifact Registry
+        env:
+          ACCESS_TOKEN: ${{ steps.auth.outputs.access_token }}
         run: |
+          echo "$ACCESS_TOKEN" | docker login \
+            -u oauth2accesstoken \
+            --password-stdin \
+            ${{ env.REGION }}-docker.pkg.dev
           docker push \
             ${{ env.REGISTRY }}/${{ env.PROJECT_ID }}/${{ env.REPO }}/${{ env.IMAGE_NAME }}:${{ github.sha }}
 
