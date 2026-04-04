@@ -1,0 +1,9 @@
+# CVE-2022-37434: zlib1g heap-based buffer overflow in inflate()
+# Affected: base image (debian:bullseye), no upstream fix available
+# Accepted risk: low exploitability in this context, monitored for upstream patch
+CVE-2022-37434
+
+# CVE-2023-45853: zlib integer overflow in zipOpenNewFileInZip4_6
+# Affected: base image (debian:bullseye), status = will_not_fix upstream
+# Accepted risk: acknowledged and tracked
+CVE-2023-45853
