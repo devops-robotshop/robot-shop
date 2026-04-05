@@ -76,20 +76,26 @@ jobs:
           docker push \
             ${{ env.REGISTRY }}/${{ env.PROJECT_ID }}/${{ env.REPO }}/${{ env.IMAGE_NAME }}:${{ github.sha }}
 
-      # Update web image via ArgoCD parameter override — does not touch values.yaml
-      - name: Install ArgoCD CLI
+      # Update image tag in Git — ArgoCD auto-syncs
+      - name: Update web image tag in images.yaml
         run: |
-          curl -sSL -o argocd \
-            https://github.com/argoproj/argo-cd/releases/latest/download/argocd-linux-amd64
-          chmod +x argocd
-          sudo mv argocd /usr/local/bin/
+          # Install yq — YAML processor (safer than sed for structured files)
+          wget -qO /usr/local/bin/yq \
+            https://github.com/mikefarah/yq/releases/latest/download/yq_linux_amd64
+          chmod +x /usr/local/bin/yq
 
-      - name: Deploy web image via ArgoCD
-        run: |
-          argocd login ${{ secrets.ARGOCD_SERVER }} \
-            --username admin \
-            --password ${{ secrets.ARGOCD_PASSWORD }} \
-            --insecure
+          # Update only web.tag — does not affect other services
+          yq e '.web.tag = "${{ github.sha }}"' -i K8s/helm/images.yaml
+
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add K8s/helm/images.yaml
+
+          # Only commit if there are actual changes
+          if ! git diff --cached --quiet; then
+            git commit -m "ci: update web image tag to ${{ github.sha }} [skip ci]"
+            git push
+          fi
 
           argocd app set robot-shop \
             --helm-set web.image=${{ env.REGISTRY }}/${{ env.PROJECT_ID }}/${{ env.REPO }}/${{ env.IMAGE_NAME }} \
