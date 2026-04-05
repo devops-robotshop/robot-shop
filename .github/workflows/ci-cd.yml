@@ -94,12 +94,6 @@ jobs:
           # Only commit if there are actual changes
           if ! git diff --cached --quiet; then
             git commit -m "ci: update web image tag to ${{ github.sha }} [skip ci]"
+            git pull --rebase origin master
             git push
-          fi
-
-          argocd app set robot-shop \
-            --helm-set web.image=${{ env.REGISTRY }}/${{ env.PROJECT_ID }}/${{ env.REPO }}/${{ env.IMAGE_NAME }} \
-            --helm-set web.version=${{ github.sha }}
-
-          argocd app sync robot-shop
-          argocd app wait robot-shop --health --timeout 120
+          fi robot-shop --health --timeout 120
