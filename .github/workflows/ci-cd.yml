@@ -117,6 +117,7 @@ jobs:
             argocd app wait robot-shop \
               --server $ARGOCD_SERVER \
               --auth-token $ARGOCD_AUTH_TOKEN \
+              --insecure \
               --grpc-web \
               --health \
               --timeout 300 && exit 0
