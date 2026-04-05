@@ -1,3 +1,3 @@
 web:
   image: asia-southeast1-docker.pkg.dev/project-669c83f6-d64c-4648-b15/robot-shop/web
-  tag: 551c7452d44945a075051b80d090d4983a857b7f
+  tag: 41fbf6a5970e7e4996dce70ccaaa83609cf68fd6
