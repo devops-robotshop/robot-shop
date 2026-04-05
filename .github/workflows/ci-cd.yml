@@ -79,21 +79,14 @@ jobs:
       # Update image tag in Git — ArgoCD auto-syncs
       - name: Update web image tag in images.yaml
         run: |
-          # Install yq — YAML processor (safer than sed for structured files)
-          wget -qO /usr/local/bin/yq \
-            https://github.com/mikefarah/yq/releases/latest/download/yq_linux_amd64
-          chmod +x /usr/local/bin/yq
-
-          # Update only web.tag — does not affect other services
-          yq e '.web.tag = "${{ github.sha }}"' -i K8s/helm/images.yaml
+          yq -i '.web.tag = "${{ github.sha }}"' K8s/helm/images.yaml
 
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
           git add K8s/helm/images.yaml
 
-          # Only commit if there are actual changes
           if ! git diff --cached --quiet; then
             git commit -m "ci: update web image tag to ${{ github.sha }} [skip ci]"
-            git pull --rebase origin master
+            git pull --rebase origin ${{ github.ref_name }}
             git push
-          fi robot-shop --health --timeout 120
+          fi
