@@ -1,0 +1,3 @@
+web:
+  image: asia-southeast1-docker.pkg.dev/project-669c83f6-d64c-4648-b15/robot-shop/web
+  tag: latest
