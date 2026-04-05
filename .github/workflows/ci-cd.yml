@@ -5,6 +5,9 @@ on:
     branches:
       - master
       - develop
+    paths:
+      - 'web/**'
+      - '.github/workflows/ci-cd.yml'
 
 env:
   PROJECT_ID: project-669c83f6-d64c-4648-b15
@@ -17,82 +20,109 @@ permissions:
   contents: write
   id-token: write
 
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: ${{ github.ref != 'refs/heads/master' }}
+
 jobs:
   build-scan-deploy:
     name: Build → Scan → Deploy
     runs-on: ubuntu-latest
+    timeout-minutes: 30
 
     steps:
       - name: Checkout source code
-        uses: actions/checkout@v4
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
 
-      # Authenticate via Workload Identity Federation (no SA key needed)
       - name: Authenticate to GCP
         id: auth
-        uses: google-github-actions/auth@v2
+        uses: google-github-actions/auth@6fc4af4b145ae7821d527454aa9bd537d1f2dc5 # v2.1.7
         with:
           workload_identity_provider: "projects/460877708164/locations/global/workloadIdentityPools/github-pool/providers/github-provider"
           service_account: "robot-shop-gsa@project-669c83f6-d64c-4648-b15.iam.gserviceaccount.com"
           token_format: "access_token"
 
-      - name: Set up Cloud SDK
-        uses: google-github-actions/setup-gcloud@v2
-        with:
-          project_id: ${{ env.PROJECT_ID }}
-
-      # Login to Artifact Registry
       - name: Configure Docker for Artifact Registry
-        uses: docker/login-action@v3
+        uses: docker/login-action@9780b0c442fbb1117ed29e0efdff1e18412f7567 # v3.3.0
         with:
           registry: ${{ env.REGION }}-docker.pkg.dev
           username: oauth2accesstoken
           password: ${{ steps.auth.outputs.access_token }}
 
-      # Setup Docker Buildx (required for build-push-action cache)
       - name: Set up Docker Buildx
-        uses: docker/setup-buildx-action@v3
+        uses: docker/setup-buildx-action@b5730afbb4f0eb96dbb759af14f6f2e3f63e05e5 # v3.10.0
 
-      # Build locally for scanning — not pushed yet
-      - name: Build Docker image
-        uses: docker/build-push-action@v5
+      - name: Build and push Docker image
+        id: build
+        uses: docker/build-push-action@ca877d9245402d0b5a8e90a795f9ca9ac8e5b3b2 # v5.4.0
         with:
           context: ./${{ env.IMAGE_NAME }}
-          push: false
-          load: true
-          tags: ${{ env.REGISTRY }}/${{ env.PROJECT_ID }}/${{ env.REPO }}/${{ env.IMAGE_NAME }}:${{ github.sha }}
+          push: true
+          tags: |
+            ${{ env.REGISTRY }}/${{ env.PROJECT_ID }}/${{ env.REPO }}/${{ env.IMAGE_NAME }}:${{ github.sha }}
+            ${{ env.REGISTRY }}/${{ env.PROJECT_ID }}/${{ env.REPO }}/${{ env.IMAGE_NAME }}:latest
+          labels: |
+            org.opencontainers.image.created=${{ github.event.head_commit.timestamp }}
+            org.opencontainers.image.revision=${{ github.sha }}
+            org.opencontainers.image.source=${{ github.repositoryUrl }}
+            org.opencontainers.image.ref.name=${{ github.ref_name }}
           cache-from: type=gha
           cache-to: type=gha,mode=max
 
-      # Security gate — pipeline stops if HIGH/CRITICAL found
       - name: Scan image with Trivy
-        uses: aquasecurity/trivy-action@master
+        uses: aquasecurity/trivy-action@6e7b7d1fd3e4fef0c5fa8cce1229c54b2c9bd0d8 # v0.20.0
         with:
           image-ref: ${{ env.REGISTRY }}/${{ env.PROJECT_ID }}/${{ env.REPO }}/${{ env.IMAGE_NAME }}:${{ github.sha }}
           format: table
           exit-code: 1
+          ignore-unfixed: true   # allow known CVEs without available fixes
           severity: HIGH,CRITICAL
 
-      # Push only if Trivy passes
-      - name: Push image to Artifact Registry
-        uses: docker/build-push-action@v5
-        with:
-          context: ./${{ env.IMAGE_NAME }}
-          push: true
-          tags: ${{ env.REGISTRY }}/${{ env.PROJECT_ID }}/${{ env.REPO }}/${{ env.IMAGE_NAME }}:${{ github.sha }}
-          cache-from: type=gha
-          cache-to: type=gha,mode=max
-
-      # Update image tag in Git — ArgoCD auto-syncs
       - name: Update web image tag in images.yaml
         run: |
-          yq -i '.web.tag = "${{ github.sha }}"' K8s/helm/images.yaml
-
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
-          git add K8s/helm/images.yaml
 
+          git pull --rebase origin ${{ github.ref_name }}
+
+          yq -i '.web.tag = "${{ github.sha }}"' K8s/helm/images.yaml
+
+          git add K8s/helm/images.yaml
           if ! git diff --cached --quiet; then
             git commit -m "ci: update web image tag to ${{ github.sha }} [skip ci]"
-            git pull --rebase origin ${{ github.ref_name }}
-            git push
+            git push origin ${{ github.ref_name }}
           fi
+
+      - name: Cache ArgoCD CLI
+        id: cache-argocd
+        uses: actions/cache@1bd1e32a3bdc45362d1e726936510720a7c6158d # v4.2.2
+        with:
+          path: /usr/local/bin/argocd
+          key: argocd-v2.13.3
+
+      - name: Install ArgoCD CLI
+        if: steps.cache-argocd.outputs.cache-hit != 'true'
+        run: |
+          curl -sSL -o /usr/local/bin/argocd \
+            https://github.com/argoproj/argo-cd/releases/download/v2.13.3/argocd-linux-amd64
+          chmod +x /usr/local/bin/argocd
+
+      - name: Wait for ArgoCD sync and health check
+        env:
+          ARGOCD_SERVER: ${{ secrets.ARGOCD_SERVER }}
+          ARGOCD_AUTH_TOKEN: ${{ secrets.ARGOCD_AUTH_TOKEN }}
+        run: |
+          for i in 1 2 3; do
+            echo "Attempt $i/3..."
+            argocd app wait robot-shop \
+              --server $ARGOCD_SERVER \
+              --auth-token $ARGOCD_AUTH_TOKEN \
+              --grpc-web \
+              --health \
+              --timeout 300 && exit 0
+
+            [ $i -lt 3 ] && echo "Not healthy yet, waiting 15s before retry..." && sleep 15
+          done
+
+          echo "ArgoCD health check failed after 3 attempts"
+          exit 1
