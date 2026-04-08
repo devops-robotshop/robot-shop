@@ -15,7 +15,7 @@ payment:
   tag: "latest"
 ratings:
   image: asia-southeast1-docker.pkg.dev/project-669c83f6-d64c-4648-b15/robot-shop/ratings
-  tag: "latest"
+  tag: "0cb49d3764b0d4917e772c94db2b61cbb0eb2934"
 shipping:
   image: asia-southeast1-docker.pkg.dev/project-669c83f6-d64c-4648-b15/robot-shop/shipping
   tag: "latest"
