@@ -14,14 +14,15 @@ env:
   REGISTRY: asia-southeast1-docker.pkg.dev
   REPO: robot-shop
 
-permissions:
-  contents: write
-  id-token: write
-
 jobs:
   detect-changes:
     name: Scan for Changes
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    outputs:
+      services: ${{ steps.set-matrix.outputs.services }}
+      has_changes: ${{ steps.set-matrix.outputs.has_changes }}
     steps:
       - uses: actions/checkout@v4
         with:
@@ -48,31 +49,37 @@ jobs:
             echo "services=[${JSON_ARRAY:1}]" >> $GITHUB_OUTPUT
             echo "has_changes=true" >> $GITHUB_OUTPUT
           fi
-    outputs:
-      services: ${{ steps.set-matrix.outputs.services }}
-      has_changes: ${{ steps.set-matrix.outputs.has_changes }}
 
   build-and-push:
     name: Build & Scan
     needs: detect-changes
     if: needs.detect-changes.outputs.has_changes == 'true'
     runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      id-token: write
     strategy:
       fail-fast: false
       matrix:
         service: ${{ fromJson(needs.detect-changes.outputs.services) }}
     steps:
       - uses: actions/checkout@v4
-
+      
+      # FIX: Đã điền đầy đủ thông số thật của nhóm bạn vào đây
       - name: Authenticate to GCP
+        id: auth
         uses: google-github-actions/auth@v2
         with:
           workload_identity_provider: "projects/460877708164/locations/global/workloadIdentityPools/github-pool/providers/github-provider"
           service_account: "robot-shop-gsa@project-669c83f6-d64c-4648-b15.iam.gserviceaccount.com"
+          token_format: "access_token"
 
       - name: Configure Docker
-        run: |
-          gcloud auth configure-docker ${{ env.REGION }}-docker.pkg.dev --quiet
+        uses: docker/login-action@v3
+        with:
+          registry: ${{ env.REGION }}-docker.pkg.dev
+          username: oauth2accesstoken
+          password: ${{ steps.auth.outputs.access_token }}
 
       - name: Build and push
         uses: docker/build-push-action@v5
@@ -84,6 +91,7 @@ jobs:
             ${{ env.REGISTRY }}/${{ env.PROJECT_ID }}/${{ env.REPO }}/${{ matrix.service }}:latest
           labels: |
             org.opencontainers.image.revision=${{ github.sha }}
+            org.opencontainers.image.created=${{ github.event.head_commit.timestamp }}
             org.opencontainers.image.source=https://github.com/${{ github.repository }}
           cache-from: type=gha
           cache-to: type=gha,mode=max
@@ -118,21 +126,28 @@ jobs:
     if: always() && needs.detect-changes.outputs.has_changes == 'true' && needs.build-and-push.result == 'success'
     runs-on: ubuntu-latest
     steps:
+      - name: Cache ArgoCD CLI
+        id: cache-argocd
+        uses: actions/cache@v4
+        with:
+          path: /usr/local/bin/argocd
+          key: argocd-v2.13.3
       - name: Install ArgoCD CLI
+        if: steps.cache-argocd.outputs.cache-hit != 'true'
         run: |
           curl -sSL -o /usr/local/bin/argocd https://github.com/argoproj/argo-cd/releases/download/v2.13.3/argocd-linux-amd64
           chmod +x /usr/local/bin/argocd
-
       - name: ArgoCD Health Check with Retry
         env:
           ARGOCD_SERVER: ${{ secrets.ARGOCD_SERVER }}
           ARGOCD_AUTH_TOKEN: ${{ secrets.ARGOCD_AUTH_TOKEN }}
         run: |
           for i in 1 2 3; do
+            echo "Attempt $i: Checking health for robot-shop..."
             argocd app wait robot-shop \
               --server $ARGOCD_SERVER \
               --auth-token $ARGOCD_AUTH_TOKEN \
               --insecure --grpc-web --health --timeout 300 && exit 0
-            [ $i -lt 3 ] && sleep 20
+            [ $i -lt 3 ] && echo "App not healthy, retrying in 20s..." && sleep 20
           done
           exit 1
