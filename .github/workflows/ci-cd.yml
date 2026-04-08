@@ -1,4 +1,4 @@
-name: CI/CD Pipeline - Robot Shop v6
+name: CI/CD Pipeline - Robot Shop
 
 on:
   push:
