@@ -3,8 +3,9 @@
 #
 FROM php:8.2-alpine
 
-RUN apt-get update && apt-get install -yqq unzip libzip-dev \
-    && docker-php-ext-install pdo_mysql opcache zip
+RUN apk update && apk upgrade && \
+    apk add --no-cache unzip libzip-dev && \
+    docker-php-ext-install pdo_mysql opcache zip
 
 # Enable AutoProfile for PHP which is currently opt-in beta
 RUN echo "instana.enable_auto_profile=1" > "/usr/local/etc/php/conf.d/zzz-instana-extras.ini"
