@@ -1,6 +1,6 @@
 web:
   image: asia-southeast1-docker.pkg.dev/project-669c83f6-d64c-4648-b15/robot-shop/web
-  tag: 2eb8054eb331d4e0f7f3d4fd52e448a500a3a06c
+  tag: 5e2061be37d33fff89517ac2ac4c1df2ff45c4dc
 cart:
   image: asia-southeast1-docker.pkg.dev/project-669c83f6-d64c-4648-b15/robot-shop/cart
   tag: "latest"
