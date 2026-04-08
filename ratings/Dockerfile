@@ -9,7 +9,7 @@ RUN apt-get update && apt-get upgrade -y && \
     apt-get install -yqq unzip libzip-dev git && \
     docker-php-ext-install pdo_mysql opcache zip
 
-RUN echo "instana.enable_auto_profile=1" > "/usr/local/etc/php/conf.d/zzz-instana-extras.ini"
+RUN composer install --no-interaction --optimize-autoloader --ignore-platform-reqs --no-scripts
 
 COPY status.conf /etc/apache2/mods-available/status.conf
 RUN a2enmod rewrite && a2enmod status
