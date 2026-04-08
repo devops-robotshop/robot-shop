@@ -1,10 +1,12 @@
 #
 # Build the app
 #
-FROM php:8.2-alpine
+FROM php:8.2-apache-bookworm
 
-RUN apk update && apk upgrade && \
-    apk add --no-cache unzip libzip-dev && \
+RUN a2enmod rewrite && a2enmod status
+
+RUN apt-get update && apt-get upgrade -y && \
+    apt-get install -yqq unzip libzip-dev && \
     docker-php-ext-install pdo_mysql opcache zip
 
 # Enable AutoProfile for PHP which is currently opt-in beta
