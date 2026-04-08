@@ -32,34 +32,34 @@ jobs:
 
     steps:
       - name: Checkout source code
-        # actions/checkout@v4.2.2
-        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
+        # actions/checkout@v4.3.1
+        uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5
 
       - name: Authenticate to GCP
         id: auth
-        # google-github-actions/auth@v2.1.2
-        uses: google-github-actions/auth@62ad5da93322b621f2d12e7a030f269a89606ba3
+        # google-github-actions/auth@v2.1.13
+        uses: google-github-actions/auth@c200f3691d83b41bf9bbd8638997a462592937ed
         with:
           workload_identity_provider: "projects/460877708164/locations/global/workloadIdentityPools/github-pool/providers/github-provider"
           service_account: "robot-shop-gsa@project-669c83f6-d64c-4648-b15.iam.gserviceaccount.com"
           token_format: "access_token"
 
       - name: Configure Docker for Artifact Registry
-        # docker/login-action@v3.3.0
-        uses: docker/login-action@9780b0c442fbb1117ed29e0efdff1e18412f7567
+        # docker/login-action@v4.17.23
+        uses: docker/login-action@c94ce9fb468520275223c153574b00df6fe4bcc9
         with:
           registry: ${{ env.REGION }}-docker.pkg.dev
           username: oauth2accesstoken
           password: ${{ steps.auth.outputs.access_token }}
 
       - name: Set up Docker Buildx
-        # docker/setup-buildx-action@v3.10.0
-        uses: docker/setup-buildx-action@c47758b77c9736f833b5b3735e2379968d075b95
+        # docker/setup-buildx-action@v3.12.0
+        uses: docker/setup-buildx-action@8d2750c68a42422c14e847fe6c8ac0403b4cbd6f
 
       - name: Build and push Docker image
         id: build
         # docker/build-push-action@v5.4.0
-        uses: docker/build-push-action@2cdde3703397bd2f05244d8058444b09e396602c
+        uses: docker/build-push-action@ca052bb54ab0790a636c9b5f226502c73d547a25
         with:
           context: ./${{ env.IMAGE_NAME }}
           push: true
@@ -75,8 +75,8 @@ jobs:
           cache-to: type=gha,mode=max
 
       - name: Scan image with Trivy
-        # aquasecurity/trivy-action@v0.20.0
-        uses: aquasecurity/trivy-action@59403ef88496338e3e46c752b7573510c4973307
+        # aquasecurity/trivy-action@v0.51.1
+        uses: aquasecurity/trivy-action@b2933f565dbc598b29947660e66259e3c7bc8561
         with:
           image-ref: ${{ env.REGISTRY }}/${{ env.PROJECT_ID }}/${{ env.REPO }}/${{ env.IMAGE_NAME }}:${{ github.sha }}
           format: table
@@ -101,8 +101,8 @@ jobs:
 
       - name: Cache ArgoCD CLI
         id: cache-argocd
-        # actions/cache@v4.2.2
-        uses: actions/cache@d4323d4df12d1420d939632f48437452d377317e
+        # actions/cache@v5.0.4
+        uses: actions/cache@0057852bfaa89a56745cba8c7296529d2fc39830
         with:
           path: /usr/local/bin/argocd
           key: argocd-v2.13.3
