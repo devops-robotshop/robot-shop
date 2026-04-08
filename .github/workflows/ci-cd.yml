@@ -7,6 +7,13 @@ on:
       - develop
     paths:
       - 'web/**'
+      - 'cart/**'
+      - 'catalogue/**'
+      - 'dispatch/**'
+      - 'payment/**'
+      - 'ratings/**'
+      - 'shipping/**'
+      - 'user/**'
       - '.github/workflows/ci-cd.yml'
 
 env:
@@ -14,7 +21,6 @@ env:
   REGION: asia-southeast1
   REGISTRY: asia-southeast1-docker.pkg.dev
   REPO: robot-shop
-  IMAGE_NAME: web
 
 permissions:
   contents: write
@@ -28,16 +34,18 @@ jobs:
   build-scan-deploy:
     name: Build → Scan → Deploy
     runs-on: ubuntu-latest
-    timeout-minutes: 30
+    timeout-minutes: 45
+    strategy:
+      fail-fast: false
+      matrix:
+        service: [web, cart, catalogue, dispatch, payment, ratings, shipping, user]
 
     steps:
       - name: Checkout source code
-        # actions/checkout@v4.3.1
         uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5
 
       - name: Authenticate to GCP
         id: auth
-        # google-github-actions/auth@v2.1.13
         uses: google-github-actions/auth@c200f3691d83b41bf9bbd8638997a462592937ed
         with:
           workload_identity_provider: "projects/460877708164/locations/global/workloadIdentityPools/github-pool/providers/github-provider"
@@ -45,7 +53,6 @@ jobs:
           token_format: "access_token"
 
       - name: Configure Docker for Artifact Registry
-        # docker/login-action@v4.17.23
         uses: docker/login-action@c94ce9fb468520275223c153574b00df6fe4bcc9
         with:
           registry: ${{ env.REGION }}-docker.pkg.dev
@@ -53,55 +60,57 @@ jobs:
           password: ${{ steps.auth.outputs.access_token }}
 
       - name: Set up Docker Buildx
-        # docker/setup-buildx-action@v3.12.0
         uses: docker/setup-buildx-action@8d2750c68a42422c14e847fe6c8ac0403b4cbd6f
 
       - name: Build and push Docker image
         id: build
-        # docker/build-push-action@v5.4.0
         uses: docker/build-push-action@ca052bb54ab0790a636c9b5f226502c73d547a25
         with:
-          context: ./${{ env.IMAGE_NAME }}
+          context: ./${{ matrix.service }}
           push: true
           tags: |
-            ${{ env.REGISTRY }}/${{ env.PROJECT_ID }}/${{ env.REPO }}/${{ env.IMAGE_NAME }}:${{ github.sha }}
-            ${{ env.REGISTRY }}/${{ env.PROJECT_ID }}/${{ env.REPO }}/${{ env.IMAGE_NAME }}:latest
+            ${{ env.REGISTRY }}/${{ env.PROJECT_ID }}/${{ env.REPO }}/${{ matrix.service }}:${{ github.sha }}
+            ${{ env.REGISTRY }}/${{ env.PROJECT_ID }}/${{ env.REPO }}/${{ matrix.service }}:latest
           labels: |
             org.opencontainers.image.created=${{ github.event.head_commit.timestamp }}
             org.opencontainers.image.revision=${{ github.sha }}
-            org.opencontainers.image.source=${{ github.repositoryUrl }}
-            org.opencontainers.image.ref.name=${{ github.ref_name }}
           cache-from: type=gha
           cache-to: type=gha,mode=max
 
       - name: Scan image with Trivy
-        # aquasecurity/trivy-action@v0.51.1
         uses: aquasecurity/trivy-action@b2933f565dbc598b29947660e66259e3c7bc8561
         with:
-          image-ref: ${{ env.REGISTRY }}/${{ env.PROJECT_ID }}/${{ env.REPO }}/${{ env.IMAGE_NAME }}:${{ github.sha }}
+          image-ref: ${{ env.REGISTRY }}/${{ env.PROJECT_ID }}/${{ env.REPO }}/${{ matrix.service }}:${{ github.sha }}
           format: table
           exit-code: 1
           ignore-unfixed: true
           severity: HIGH,CRITICAL
 
-      - name: Update web image tag in images.yaml
+      - name: Update service image tag in images.yaml
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
 
-          git pull --rebase origin ${{ github.ref_name }}
-
-          yq -i '.web.tag = "${{ github.sha }}"' K8s/helm/images.yaml
-
-          git add K8s/helm/images.yaml
-          if ! git diff --cached --quiet; then
-            git commit -m "ci: update web image tag to ${{ github.sha }} [skip ci]"
-            git push origin ${{ github.ref_name }}
-          fi
+          # Use retry logic to handle race conditions when multiple matrix jobs push to Git [cite: 322]
+          for i in {1..5}; do
+            git pull --rebase origin ${{ github.ref_name }}
+            yq -i ".${{ matrix.service }}.tag = \"${{ github.sha }}\"" K8s/helm/images.yaml
+            git add K8s/helm/images.yaml
+            if git diff --cached --quiet; then
+              echo "No changes to commit for ${{ matrix.service }}"
+              break
+            fi
+            if git commit -m "ci: update ${{ matrix.service }} image tag to ${{ github.sha }} [skip ci]" && git push origin ${{ github.ref_name }}; then
+              echo "Successfully updated ${{ matrix.service }} tag"
+              break
+            else
+              echo "Conflict detected, retrying... ($i/5)"
+              sleep $((RANDOM % 10 + 1))
+            fi
+          done
 
       - name: Cache ArgoCD CLI
         id: cache-argocd
-        # actions/cache@v5.0.4
         uses: actions/cache@0057852bfaa89a56745cba8c7296529d2fc39830
         with:
           path: /usr/local/bin/argocd
@@ -119,8 +128,8 @@ jobs:
           ARGOCD_SERVER: ${{ secrets.ARGOCD_SERVER }}
           ARGOCD_AUTH_TOKEN: ${{ secrets.ARGOCD_AUTH_TOKEN }}
         run: |
+          # Verify deployment health via ArgoCD [cite: 324, 325]
           for i in 1 2 3; do
-            echo "Attempt $i/3..."
             argocd app wait robot-shop \
               --server $ARGOCD_SERVER \
               --auth-token $ARGOCD_AUTH_TOKEN \
@@ -128,9 +137,6 @@ jobs:
               --grpc-web \
               --health \
               --timeout 300 && exit 0
-
-            [ $i -lt 3 ] && echo "Not healthy yet, waiting 15s before retry..." && sleep 15
+            [ $i -lt 3 ] && sleep 15
           done
-
-          echo "ArgoCD health check failed after 3 attempts"
           exit 1
