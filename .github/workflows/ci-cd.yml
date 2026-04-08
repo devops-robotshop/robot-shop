@@ -32,29 +32,34 @@ jobs:
 
     steps:
       - name: Checkout source code
-        uses: actions/checkout@v4
+        # actions/checkout@v4.2.2
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
 
       - name: Authenticate to GCP
         id: auth
-        uses: google-github-actions/auth@v2
+        # google-github-actions/auth@v2.1.2
+        uses: google-github-actions/auth@62ad5da93322b621f2d12e7a030f269a89606ba3
         with:
           workload_identity_provider: "projects/460877708164/locations/global/workloadIdentityPools/github-pool/providers/github-provider"
           service_account: "robot-shop-gsa@project-669c83f6-d64c-4648-b15.iam.gserviceaccount.com"
           token_format: "access_token"
 
       - name: Configure Docker for Artifact Registry
-        uses: docker/login-action@v3
+        # docker/login-action@v3.3.0
+        uses: docker/login-action@9780b0c442fbb1117ed29e0efdff1e18412f7567
         with:
           registry: ${{ env.REGION }}-docker.pkg.dev
           username: oauth2accesstoken
           password: ${{ steps.auth.outputs.access_token }}
 
       - name: Set up Docker Buildx
-        uses: docker/setup-buildx-action@v3
+        # docker/setup-buildx-action@v3.10.0
+        uses: docker/setup-buildx-action@c47758b77c9736f833b5b3735e2379968d075b95
 
       - name: Build and push Docker image
         id: build
-        uses: docker/build-push-action@v5
+        # docker/build-push-action@v5.4.0
+        uses: docker/build-push-action@2cdde3703397bd2f05244d8058444b09e396602c
         with:
           context: ./${{ env.IMAGE_NAME }}
           push: true
@@ -70,7 +75,8 @@ jobs:
           cache-to: type=gha,mode=max
 
       - name: Scan image with Trivy
-        uses: aquasecurity/trivy-action@v0.20.0
+        # aquasecurity/trivy-action@v0.20.0
+        uses: aquasecurity/trivy-action@59403ef88496338e3e46c752b7573510c4973307
         with:
           image-ref: ${{ env.REGISTRY }}/${{ env.PROJECT_ID }}/${{ env.REPO }}/${{ env.IMAGE_NAME }}:${{ github.sha }}
           format: table
@@ -95,7 +101,8 @@ jobs:
 
       - name: Cache ArgoCD CLI
         id: cache-argocd
-        uses: actions/cache@v4
+        # actions/cache@v4.2.2
+        uses: actions/cache@d4323d4df12d1420d939632f48437452d377317e
         with:
           path: /usr/local/bin/argocd
           key: argocd-v2.13.3
