@@ -16,3 +16,4 @@ COPY server.js /opt/server/
 CMD ["node", "server.js"]
 
 #Test pipeline
+# Chay pipeline lan cuoi cho DevSecOps
