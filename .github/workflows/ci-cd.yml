@@ -99,7 +99,7 @@ jobs:
           cache-to: type=gha,mode=max
 
       - name: Scan with Trivy
-        uses: aquasecurity/trivy-action@v0.24.0
+        uses: aquasecurity/trivy-action@18f259c5e2803d3d2724b7fa79c0fef998f46cf3
         with:
           image-ref: ${{ env.REGISTRY }}/${{ env.PROJECT_ID }}/${{ env.REPO }}/${{ matrix.service }}:${{ github.sha }}
           format: table
