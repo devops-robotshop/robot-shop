@@ -1,8 +1,14 @@
 FROM python:3.9-slim
 
-RUN apt-get update && apt-get upgrade -y && apt-get clean
+ENV INSTANA_AUTO_PROFILE=true
 
-ENV INSTANA_AUTO_PROFILE true
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    build-essential \
+    gcc \
+    && apt-get upgrade -y \
+    && apt-get clean \
+    && rm -rf /var/lib/apt/lists/*
+
 EXPOSE 8080
 WORKDIR /app
 
