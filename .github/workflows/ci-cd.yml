@@ -8,6 +8,10 @@ on:
       - 'docs/**'
       - '.github/**'
 
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
 env:
   PROJECT_ID: project-669c83f6-d64c-4648-b15
   REGION: asia-southeast1
@@ -98,12 +102,21 @@ jobs:
           cache-from: type=gha
           cache-to: type=gha,mode=max
 
-      - name: Scan with Trivy
+      - name: Scan with Trivy (HIGH - Report Only)
         uses: aquasecurity/trivy-action@6e7b7d1fd3e4fef0c5fa8cce1229c54b2c9bd0d8
         with:
           image-ref: ${{ env.REGISTRY }}/${{ env.PROJECT_ID }}/${{ env.REPO }}/${{ matrix.service }}:${{ github.sha }}
           format: table
-          exit-code: 1
+          exit-code: 0  
+          ignore-unfixed: true
+          severity: HIGH
+
+      - name: Scan with Trivy (CRITICAL - Block CI)
+        uses: aquasecurity/trivy-action@6e7b7d1fd3e4fef0c5fa8cce1229c54b2c9bd0d8
+        with:
+          image-ref: ${{ env.REGISTRY }}/${{ env.PROJECT_ID }}/${{ env.REPO }}/${{ matrix.service }}:${{ github.sha }}
+          format: table
+          exit-code: 1   
           ignore-unfixed: true
           severity: CRITICAL
 

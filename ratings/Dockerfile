@@ -21,4 +21,5 @@ COPY status.conf /etc/apache2/mods-available/status.conf
 
 RUN rm -rf /var/www/var/*
 RUN chown -R www-data /var/www
-RUN chmod -R 777 /var/www
+RUN chown -R www-data:www-data /var/www/html
+RUN chmod -R 755 /var/www/html

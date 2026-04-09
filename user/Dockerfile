@@ -8,7 +8,7 @@ WORKDIR /opt/server
 
 COPY package*.json /opt/server/
 
-RUN npm install
+RUN npm ci --omit=dev
 
 COPY server.js /opt/server/
 
