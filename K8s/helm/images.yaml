@@ -6,7 +6,7 @@ cart:
   tag: "27984a1cb5721423754aff2c36fb8084cd03d355"
 catalogue:
   image: asia-southeast1-docker.pkg.dev/project-669c83f6-d64c-4648-b15/robot-shop/catalogue
-  tag: "55320952fa6ac7d597d36c0b1a17316f9e9d1292"
+  tag: "ea636012df1326b06a479cc85a3dd105e1070cd6"
 dispatch:
   image: asia-southeast1-docker.pkg.dev/project-669c83f6-d64c-4648-b15/robot-shop/dispatch
   tag: "latest"
