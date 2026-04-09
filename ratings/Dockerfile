@@ -23,3 +23,5 @@ RUN rm -rf /var/www/var/*
 RUN chown -R www-data /var/www
 RUN chown -R www-data:www-data /var/www/html
 RUN chmod -R 755 /var/www/html
+
+#Test pipeline

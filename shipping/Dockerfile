@@ -25,4 +25,4 @@ COPY --from=builder /opt/shipping/target/*.jar shipping.jar
 EXPOSE 8080
 USER 1001
 CMD [ "java", "-Xms256m", "-Xmx768m", "-jar", "shipping.jar" ]
-#test pipeline
+
