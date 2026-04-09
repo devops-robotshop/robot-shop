@@ -1,0 +1,4 @@
+# CVE-2016-1000027 is a legacy issue in Spring 5.3.x 
+# Fixed only in Spring 6.0 which requires Jakarta EE (breaking change)
+# The shipping service does not use HttpInvokerServiceExporter.
+CVE-2016-1000027
