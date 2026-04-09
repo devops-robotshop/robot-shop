@@ -21,4 +21,4 @@ shipping:
   tag: "latest"
 user:
   image: asia-southeast1-docker.pkg.dev/project-669c83f6-d64c-4648-b15/robot-shop/user
-  tag: "822c51641aa90d117fd0f8dbcfb346ed80c7e652"
+  tag: "ea636012df1326b06a479cc85a3dd105e1070cd6"
