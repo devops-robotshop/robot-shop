@@ -99,14 +99,13 @@ jobs:
           cache-to: type=gha,mode=max
 
       - name: Scan with Trivy
-        uses: aquasecurity/trivy-action@b2933f565dbc598b29947660e66259e3c7bc8561
+        uses: aquasecurity/trivy-action@v0.28.0
         with:
           image-ref: ${{ env.REGISTRY }}/${{ env.PROJECT_ID }}/${{ env.REPO }}/${{ matrix.service }}:${{ github.sha }}
           format: table
           exit-code: 1
           ignore-unfixed: true
           severity: CRITICAL
-          trivyignore: 'shipping/.trivyignore'
 
       - name: Update manifest (GitOps)
         run: |
