@@ -1,10 +1,22 @@
-FROM golang:1.17
+FROM golang:1.21-alpine AS builder
 
-WORKDIR /go/src/app
+RUN apk add --no-cache git
 
-COPY *.go .
+WORKDIR /app
+COPY go.mod ./
 
-RUN go mod init dispatch && go get
-RUN go install
+RUN go mod download
 
-CMD dispatch
+COPY . .
+
+RUN CGO_ENABLED=0 GOOS=linux go build -o dispatch
+
+FROM gcr.io/distroless/static-debian12
+
+WORKDIR /app
+
+COPY --from=builder /app/dispatch .
+
+EXPOSE 8080
+
+CMD ["./dispatch"]
