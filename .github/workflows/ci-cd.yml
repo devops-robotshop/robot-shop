@@ -106,7 +106,6 @@ jobs:
           exit-code: 1
           ignore-unfixed: true
           severity: CRITICAL
-          ignore-policy: '.trivyignore'
 
       - name: Update manifest (GitOps)
         run: |
