@@ -12,7 +12,7 @@ dispatch:
   tag: "2fa58427bad383d8300f33db514a8cca2768ee29"
 payment:
   image: asia-southeast1-docker.pkg.dev/project-669c83f6-d64c-4648-b15/robot-shop/payment
-  tag: "f715375fb4f6f3ee48f9d448b582ea6cfce1a44c"
+  tag: "6afafc90dd64d1bfe9789f227c97c2bea2411f0e"
 ratings:
   image: asia-southeast1-docker.pkg.dev/project-669c83f6-d64c-4648-b15/robot-shop/ratings
   tag: "0cb49d3764b0d4917e772c94db2b61cbb0eb2934"
