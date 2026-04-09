@@ -75,6 +75,13 @@ jobs:
     steps:
       - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5
 
+      - name: Checkov Scan (Block on HIGH/CRITICAL)
+        uses: bridgecrewio/checkov-action@master
+        with:
+          directory: ./${{ matrix.service }}
+          framework: dockerfile
+          soft_fail: false
+
       - name: Auth to GCP
         id: auth
         uses: google-github-actions/auth@c200f3691d83b41bf9bbd8638997a462592937ed
@@ -92,6 +99,14 @@ jobs:
           registry: ${{ env.REGION }}-docker.pkg.dev
           username: oauth2accesstoken
           password: ${{ steps.auth.outputs.access_token }}
+
+      - name: SonarCloud Scan
+        uses: SonarSource/sonarcloud-github-action@master
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+        with:
+          projectBaseDir: ./${{ matrix.service }}
 
       - name: Build & Push
         uses: docker/build-push-action@ca052bb54ab0790a636c9b5f226502c73d547a25
