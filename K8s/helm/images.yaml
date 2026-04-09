@@ -15,7 +15,7 @@ payment:
   tag: "6afafc90dd64d1bfe9789f227c97c2bea2411f0e"
 ratings:
   image: asia-southeast1-docker.pkg.dev/project-669c83f6-d64c-4648-b15/robot-shop/ratings
-  tag: "0cb49d3764b0d4917e772c94db2b61cbb0eb2934"
+  tag: "6afafc90dd64d1bfe9789f227c97c2bea2411f0e"
 shipping:
   image: asia-southeast1-docker.pkg.dev/project-669c83f6-d64c-4648-b15/robot-shop/shipping
   tag: "c177c4bd5d329d07f09c663d12230f83b2ff9ced"
