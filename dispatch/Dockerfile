@@ -14,3 +14,4 @@ COPY --from=builder /app/dispatch .
 EXPOSE 8080
 CMD ["./dispatch"]
 
+#Test pipeline

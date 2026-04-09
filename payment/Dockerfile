@@ -19,5 +19,3 @@ RUN pip install --no-cache-dir --upgrade pip && \
 COPY *.py /app/
 
 CMD ["python", "payment.py"]
-
-#Test pipeline
