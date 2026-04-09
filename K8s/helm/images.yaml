@@ -3,7 +3,7 @@ web:
   tag: 9ecfbbfe7a21c551c97d219aac6c1f6067328014
 cart:
   image: asia-southeast1-docker.pkg.dev/project-669c83f6-d64c-4648-b15/robot-shop/cart
-  tag: "9ecfbbfe7a21c551c97d219aac6c1f6067328014"
+  tag: "b5ee3b5fae55c2aedcf6684046fbc8409d7ae090"
 catalogue:
   image: asia-southeast1-docker.pkg.dev/project-669c83f6-d64c-4648-b15/robot-shop/catalogue
   tag: "9ecfbbfe7a21c551c97d219aac6c1f6067328014"
