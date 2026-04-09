@@ -101,12 +101,15 @@ jobs:
           password: ${{ steps.auth.outputs.access_token }}
 
       - name: SonarCloud Scan
-        uses: SonarSource/sonarcloud-github-action@master
+        uses: SonarSource/sonarqube-scan-action@v5.0.0
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
         with:
           projectBaseDir: ./${{ matrix.service }}
+          args: >
+            -Dsonar.organization=devops-robotshop
+            -Dsonar.projectKey=devops-robotshop_robot-shop
 
       - name: Build & Push
         uses: docker/build-push-action@ca052bb54ab0790a636c9b5f226502c73d547a25
