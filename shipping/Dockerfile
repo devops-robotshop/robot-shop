@@ -14,13 +14,13 @@ FROM eclipse-temurin:17-jre-alpine
 
 RUN apk update && apk upgrade --no-cache
 
-EXPOSE 8080
 WORKDIR /opt/shipping
 
 ENV CART_ENDPOINT=cart:8080
 ENV DB_HOST=mysql
 ENV INSTANA_AUTO_PROFILE=true
 
-COPY --from=builder /opt/shipping/target/shipping-1.0.jar shipping.jar
+COPY --from=builder /opt/shipping/target/*.jar shipping.jar
 
+EXPOSE 8080
 CMD [ "java", "-Xms256m", "-Xmx768m", "-jar", "shipping.jar" ]
