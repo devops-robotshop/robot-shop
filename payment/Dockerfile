@@ -10,7 +10,6 @@ COPY requirements.txt /app/
 RUN pip install --no-cache-dir --upgrade pip && \
     pip install --no-cache-dir -r requirements.txt
 
-COPY payment.js /app/
 COPY *.py /app/
 
 CMD ["python", "payment.py"]
