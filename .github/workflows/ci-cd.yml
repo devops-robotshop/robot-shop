@@ -20,7 +20,7 @@ env:
 
 jobs:
   detect-changes:
-    name: Scan for Changes
+    name: Detect Changes
     runs-on: ubuntu-latest
     permissions:
       contents: read
@@ -28,23 +28,28 @@ jobs:
       services: ${{ steps.set-matrix.outputs.services }}
       has_changes: ${{ steps.set-matrix.outputs.has_changes }}
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5
         with:
           fetch-depth: 0
+
       - id: set-matrix
         run: |
           ALL_APPS=("web" "cart" "catalogue" "dispatch" "payment" "ratings" "shipping" "user")
           CHANGED_APPS=()
+
           BASE=${{ github.event.before }}
           HEAD=${{ github.sha }}
+
           if [ "$BASE" = "0000000000000000000000000000000000000000" ]; then
             BASE=$(git rev-parse HEAD~1)
           fi
+
           for app in "${ALL_APPS[@]}"; do
             if git diff --name-only $BASE $HEAD | grep -q "^${app}/"; then
               CHANGED_APPS+=("\"${app}\"")
             fi
           done
+
           if [ ${#CHANGED_APPS[@]} -eq 0 ]; then
             echo "services=[]" >> $GITHUB_OUTPUT
             echo "has_changes=false" >> $GITHUB_OUTPUT
@@ -60,35 +65,36 @@ jobs:
     if: needs.detect-changes.outputs.has_changes == 'true'
     runs-on: ubuntu-latest
     permissions:
-      contents: write
+      contents: read
       id-token: write
     strategy:
       fail-fast: false
       matrix:
         service: ${{ fromJson(needs.detect-changes.outputs.services) }}
-    steps:
-      - uses: actions/checkout@v4
 
-      - name: Authenticate to GCP
+    steps:
+      - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5
+
+      - name: Auth to GCP
         id: auth
-        uses: google-github-actions/auth@v2
+        uses: google-github-actions/auth@c200f3691d83b41bf9bbd8638997a462592937ed
         with:
           workload_identity_provider: "projects/460877708164/locations/global/workloadIdentityPools/github-pool/providers/github-provider"
           service_account: "robot-shop-gsa@project-669c83f6-d64c-4648-b15.iam.gserviceaccount.com"
           token_format: "access_token"
 
-      - name: Set up Docker Buildx
-        uses: docker/setup-buildx-action@v3
+      - name: Setup Buildx
+        uses: docker/setup-buildx-action@8d2750c68a42422c14e847fe6c8ac0403b4cbd6f
 
-      - name: Configure Docker
-        uses: docker/login-action@v3
+      - name: Docker login
+        uses: docker/login-action@v3c94ce9fb468520275223c153574b00df6fe4bcc9
         with:
           registry: ${{ env.REGION }}-docker.pkg.dev
           username: oauth2accesstoken
           password: ${{ steps.auth.outputs.access_token }}
 
-      - name: Build and push
-        uses: docker/build-push-action@v5
+      - name: Build & Push
+        uses: docker/build-push-action@ca052bb54ab0790a636c9b5f226502c73d547a25
         with:
           context: ./${{ matrix.service }}
           push: true
@@ -102,60 +108,96 @@ jobs:
           cache-from: type=gha
           cache-to: type=gha,mode=max
 
-      - name: Scan with Trivy (HIGH - Report Only)
+      # Report HIGH only
+      - name: Trivy HIGH (report)
         uses: aquasecurity/trivy-action@6e7b7d1fd3e4fef0c5fa8cce1229c54b2c9bd0d8
         with:
           image-ref: ${{ env.REGISTRY }}/${{ env.PROJECT_ID }}/${{ env.REPO }}/${{ matrix.service }}:${{ github.sha }}
           format: table
-          exit-code: 0  
+          exit-code: 0
           ignore-unfixed: true
           severity: HIGH
 
-      - name: Scan with Trivy (CRITICAL - Block CI)
+      # Block on CRITICAL
+      - name: Trivy CRITICAL (fail)
         uses: aquasecurity/trivy-action@6e7b7d1fd3e4fef0c5fa8cce1229c54b2c9bd0d8
         with:
           image-ref: ${{ env.REGISTRY }}/${{ env.PROJECT_ID }}/${{ env.REPO }}/${{ matrix.service }}:${{ github.sha }}
           format: table
-          exit-code: 1   
+          exit-code: 1
           ignore-unfixed: true
           severity: CRITICAL
 
-      - name: Update manifest (GitOps)
+      # Save build result
+      - name: Save image tag
+        run: echo "${{ matrix.service }}=${{ github.sha }}" > image.txt
+
+      - name: Upload artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: image-${{ matrix.service }}
+          path: image.txt
+
+  update-manifest:
+    name: Update Manifest (GitOps)
+    needs: build-and-push
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Download artifacts
+        uses: actions/download-artifact@v4
+        with:
+          path: artifacts
+
+      - name: Merge image tags
+        run: |
+          for file in artifacts/**/image.txt; do
+            while IFS='=' read -r service tag; do
+              echo "Updating $service -> $tag"
+              yq -i ".${service}.tag = \"${tag}\"" K8s/helm/images.yaml
+            done < "$file"
+          done
+
+      - name: Commit & push
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
-          for i in {1..7}; do
-            git pull --rebase origin ${{ github.ref_name }}
-            yq -i ".${{ matrix.service }}.tag = \"${{ github.sha }}\"" K8s/helm/images.yaml
-            git add K8s/helm/images.yaml
-            if git commit -m "ci: update ${{ matrix.service }} tag [skip ci]" && git push origin ${{ github.ref_name }}; then
-              break
-            else
-              sleep $((RANDOM % 15 + 5))
-            fi
-          done
+
+          git add K8s/helm/images.yaml
+
+          if ! git diff --cached --quiet; then
+            git commit -m "ci: update image tags [skip ci]"
+            git push origin ${{ github.ref_name }}
+          fi
 
   verify-deployment:
     name: Verify Deploy
-    needs: [detect-changes, build-and-push]
+    needs: [detect-changes, build-and-push, update-manifest]
     if: always() && needs.detect-changes.outputs.has_changes == 'true' && needs.build-and-push.result == 'success'
     runs-on: ubuntu-latest
+
     steps:
       - name: Install ArgoCD CLI
         run: |
           curl -sSL -o /usr/local/bin/argocd https://github.com/argoproj/argo-cd/releases/download/v2.13.3/argocd-linux-amd64
           chmod +x /usr/local/bin/argocd
-      - name: ArgoCD Health Check with Retry
+
+      - name: ArgoCD health check
         env:
           ARGOCD_SERVER: ${{ secrets.ARGOCD_SERVER }}
           ARGOCD_AUTH_TOKEN: ${{ secrets.ARGOCD_AUTH_TOKEN }}
         run: |
           for i in 1 2 3; do
-            echo "Attempt $i: Checking health for robot-shop..."
+            echo "Attempt $i..."
             argocd app wait robot-shop \
               --server $ARGOCD_SERVER \
               --auth-token $ARGOCD_AUTH_TOKEN \
               --insecure --grpc-web --health --timeout 300 && exit 0
-            [ $i -lt 3 ] && echo "App not healthy, retrying in 20s..." && sleep 20
+
+            [ $i -lt 3 ] && sleep 20
           done
           exit 1
