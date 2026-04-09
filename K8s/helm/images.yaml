@@ -9,7 +9,7 @@ catalogue:
   tag: "9ecfbbfe7a21c551c97d219aac6c1f6067328014"
 dispatch:
   image: asia-southeast1-docker.pkg.dev/project-669c83f6-d64c-4648-b15/robot-shop/dispatch
-  tag: "9ecfbbfe7a21c551c97d219aac6c1f6067328014"
+  tag: "c5036ba8a4bf8050eda5834535f63df394291205"
 payment:
   image: asia-southeast1-docker.pkg.dev/project-669c83f6-d64c-4648-b15/robot-shop/payment
   tag: "9ecfbbfe7a21c551c97d219aac6c1f6067328014"
