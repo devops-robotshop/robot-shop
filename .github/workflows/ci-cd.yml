@@ -76,7 +76,7 @@ jobs:
       - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5
 
       - name: Checkov Scan (Block on HIGH/CRITICAL)
-        uses: bridgecrewio/checkov-action@5abded9b17849c71650b28489a2da38e211ebbc6
+        uses: bridgecrewio/checkov-action@master
         with:
           directory: ./${{ matrix.service }}
           framework: dockerfile
@@ -101,7 +101,7 @@ jobs:
           password: ${{ steps.auth.outputs.access_token }}
 
       - name: SonarCloud Scan
-        uses: SonarSource/sonarcloud-github-action@ffc30106891f74fa2e17639f75ec305a41d91a9b
+        uses: SonarSource/sonarcloud-github-action@master
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
