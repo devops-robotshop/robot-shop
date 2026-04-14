@@ -1,0 +1,42 @@
+apiVersion: keda.sh/v1alpha1
+kind: ScaledObject
+metadata:
+  name: web-scaler
+  namespace: production
+spec:
+  scaleTargetRef:
+    apiVersion: apps/v1
+    kind: Deployment
+    name: web
+  minReplicaCount: 1
+  maxReplicaCount: 5
+  triggers:
+  - type: prometheus
+    metadata:
+      # KEDA gọi thẳng vào Prometheus qua mạng nội bộ K8s
+      serverAddress: http://kube-prometheus-stack-prometheus.monitoring.svc.cluster.local:9090
+      metricName: http_requests_total
+      # Cứ vượt ngưỡng 100 request/giây là tự đẻ thêm Pod
+      threshold: "100"
+      query: sum(rate(http_requests_total{kubernetes_namespace="production", pod=~"web-.*"}[1m]))
+---
+apiVersion: keda.sh/v1alpha1
+kind: ScaledObject
+metadata:
+  name: dispatch-scaler
+  namespace: production
+spec:
+  scaleTargetRef:
+    apiVersion: apps/v1
+    kind: Deployment
+    name: dispatch
+  minReplicaCount: 1
+  maxReplicaCount: 5
+  triggers:
+  - type: rabbitmq
+    metadata:
+      # Kết nối vào RabbitMQ nội bộ của Robot Shop (mặc định guest/guest)
+      host: amqp://guest:guest@rabbitmq.production.svc.cluster.local:5672
+      mode: QueueLength
+      # Nếu hàng đợi có hơn 50 tin nhắn chưa xử lý -> đẻ thêm Pod dispatch
+      value: "50"
