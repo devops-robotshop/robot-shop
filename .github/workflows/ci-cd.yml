@@ -229,7 +229,15 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
+      - name: Cache ArgoCD CLI
+        id: cache-argocd
+        uses: actions/cache@v4
+        with:
+          path: /usr/local/bin/argocd
+          key: argocd-v2.13.3
+
       - name: Install ArgoCD CLI
+        if: steps.cache-argocd.outputs.cache-hit != 'true'
         run: |
           curl -sSL -o /usr/local/bin/argocd https://github.com/argoproj/argo-cd/releases/download/v2.13.3/argocd-linux-amd64
           chmod +x /usr/local/bin/argocd
