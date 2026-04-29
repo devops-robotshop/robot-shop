@@ -57,6 +57,55 @@ jobs:
           username: oauth2accesstoken
           password: ${{ steps.auth.outputs.access_token }}
 
+      # Generate coverage report for Node.js services (cart, catalogue, user)
+      - name: Setup Node.js
+        if: contains('["cart","catalogue","user"]', matrix.service)
+        uses: actions/setup-node@v4
+        with:
+          node-version: '18'
+          cache: 'npm'
+          cache-dependency-path: ${{ matrix.service }}/package-lock.json
+
+      - name: Generate Node.js coverage
+        if: contains('["cart","catalogue","user"]', matrix.service)
+        run: |
+          cd ${{ matrix.service }}
+          npm ci --ignore-scripts
+          npm test -- --coverage --coverageReporters=lcov
+        continue-on-error: true
+
+      # Generate coverage report for Java service (shipping)
+      - name: Setup Java
+        if: matrix.service == 'shipping'
+        uses: actions/setup-java@v4
+        with:
+          java-version: '17'
+          distribution: 'temurin'
+          cache: 'maven'
+
+      - name: Generate Java coverage
+        if: matrix.service == 'shipping'
+        run: |
+          cd shipping
+          mvn test jacoco:report --no-transfer-progress
+        continue-on-error: true
+
+      # Generate coverage report for Python service (payment)
+      - name: Setup Python
+        if: matrix.service == 'payment'
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+          cache: 'pip'
+
+      - name: Generate Python coverage
+        if: matrix.service == 'payment'
+        run: |
+          cd payment
+          pip install -r requirements.txt pytest pytest-cov
+          pytest test_payment.py --cov=payment --cov-report=xml
+        continue-on-error: true
+
       - name: SonarCloud Scan
         uses: SonarSource/sonarqube-scan-action@v5.0.0
         env:
@@ -67,6 +116,10 @@ jobs:
           args: >
             -Dsonar.organization=devops-robotshop
             -Dsonar.projectKey=devops-robotshop_robot-shop
+            -Dsonar.javascript.lcov.reportPaths=coverage/lcov.info
+            -Dsonar.python.coverage.reportPaths=coverage.xml
+            -Dsonar.java.coveragePlugin=jacoco
+            -Dsonar.coverage.jacoco.xmlReportPaths=target/site/jacoco/jacoco.xml
 
       - name: SonarCloud Quality Gate
         uses: sonarsource/sonarqube-quality-gate-action@master
