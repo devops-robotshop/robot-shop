@@ -15,6 +15,3 @@ RUN npm ci --omit=dev
 COPY server.js /opt/server/
 
 CMD ["node", "server.js"]
-
-#Test pipeline
-#test
