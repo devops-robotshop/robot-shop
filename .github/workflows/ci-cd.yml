@@ -67,10 +67,21 @@ jobs:
       - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5
         with:
           fetch-depth: 0
+
+      - name: Cache Gitleaks binary
+        id: cache-gitleaks
+        uses: actions/cache@v4
+        with:
+          path: ./gitleaks
+          key: gitleaks-8.18.4
+
+      - name: Download Gitleaks
+        if: steps.cache-gitleaks.outputs.cache-hit != 'true'
+        run: |
+          curl -sSL https://github.com/gitleaks/gitleaks/releases/download/v8.18.4/gitleaks_8.18.4_linux_x64.tar.gz | tar -xz
+
       - name: Gitleaks Secret Scan
-        uses: gitleaks/gitleaks-action@v2
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: ./gitleaks detect --source . --verbose --redact
 
   build-and-push:
     name: Build & Scan
