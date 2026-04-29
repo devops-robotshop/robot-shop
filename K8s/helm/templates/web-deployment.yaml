@@ -35,7 +35,7 @@ spec:
             cpu: 200m
             memory: 100Mi
           requests:
-            cpu: 100m
+            cpu: 50m
             memory: 50Mi
       restartPolicy: Always
       {{- with .Values.web.affinity }}
