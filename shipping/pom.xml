@@ -18,7 +18,7 @@
 
     <properties>
         <java.version>17</java.version>
-        <tomcat.version>9.0.99</tomcat.version>
+        <tomcat.version>9.0.116</tomcat.version>
         <spring-framework.version>5.3.33</spring-framework.version>
     </properties>
 
