@@ -120,6 +120,7 @@ jobs:
             -Dsonar.python.coverage.reportPaths=coverage.xml
             -Dsonar.java.coveragePlugin=jacoco
             -Dsonar.coverage.jacoco.xmlReportPaths=target/site/jacoco/jacoco.xml
+            -Dsonar.exclusions=coverage/**,**/*.test.js,**/test_*.py
 
       - name: SonarCloud Quality Gate
         uses: sonarsource/sonarqube-quality-gate-action@master
