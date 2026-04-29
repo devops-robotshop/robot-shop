@@ -34,6 +34,18 @@ spec:
           requests:
             cpu: 100m
             memory: 700Mi
+        readinessProbe:
+          tcpSocket:
+            port: 3306
+          initialDelaySeconds: 10
+          periodSeconds: 5
+          failureThreshold: 3
+        livenessProbe:
+          tcpSocket:
+            port: 3306
+          initialDelaySeconds: 15
+          periodSeconds: 10
+          failureThreshold: 3
       restartPolicy: Always
       {{- with .Values.mysql.affinity }}
       affinity:

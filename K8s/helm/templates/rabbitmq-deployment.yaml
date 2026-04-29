@@ -31,6 +31,18 @@ spec:
           requests:
             cpu: 100m
             memory: 256Mi
+        readinessProbe:
+          tcpSocket:
+            port: 5672
+          initialDelaySeconds: 10
+          periodSeconds: 5
+          failureThreshold: 3
+        livenessProbe:
+          tcpSocket:
+            port: 5672
+          initialDelaySeconds: 15
+          periodSeconds: 10
+          failureThreshold: 3
       restartPolicy: Always
       {{- with .Values.rabbitmq.affinity }}
       affinity:

@@ -36,6 +36,20 @@ spec:
           requests:
             cpu: 100m
             memory: 50Mi
+        readinessProbe:
+          httpGet:
+            path: /health
+            port: 8080
+          initialDelaySeconds: 10
+          periodSeconds: 5
+          failureThreshold: 3
+        livenessProbe:
+          httpGet:
+            path: /health
+            port: 8080
+          initialDelaySeconds: 15
+          periodSeconds: 10
+          failureThreshold: 3
       {{- with .Values.cart.affinity }}
       affinity:
         {{- toYaml . | nindent 8 }}
