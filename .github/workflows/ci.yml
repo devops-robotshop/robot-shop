@@ -65,6 +65,9 @@ jobs:
       services: ${{ needs.detect-changes.outputs.services }}
       has_changes: ${{ needs.detect-changes.outputs.has_changes == 'true' }}
     secrets: inherit
+    permissions:
+      contents: read
+      id-token: write
 
   update-manifest:
     name: Update Manifest (GitOps)
