@@ -115,7 +115,8 @@ jobs:
           projectBaseDir: ./${{ matrix.service }}
           args: >
             -Dsonar.organization=devops-robotshop
-            -Dsonar.projectKey=devops-robotshop_robot-shop
+            -Dsonar.projectKey=devops-robotshop_robot-shop-${{ matrix.service }}
+            -Dsonar.java.binaries=target/classes
             -Dsonar.javascript.lcov.reportPaths=coverage/lcov.info
             -Dsonar.python.coverage.reportPaths=coverage.xml
             -Dsonar.java.coveragePlugin=jacoco
