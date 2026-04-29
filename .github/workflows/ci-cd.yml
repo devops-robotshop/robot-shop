@@ -135,6 +135,12 @@ jobs:
             -Dsonar.organization=devops-robotshop
             -Dsonar.projectKey=devops-robotshop_robot-shop
 
+      - name: SonarCloud Quality Gate
+        uses: sonarsource/sonarqube-quality-gate-action@master
+        timeout-minutes: 5
+        env:
+          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+
       - name: Build & Push
         uses: docker/build-push-action@ca052bb54ab0790a636c9b5f226502c73d547a25
         with:
