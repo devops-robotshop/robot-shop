@@ -47,9 +47,18 @@ jobs:
     name: Detect Changes
     uses: ./.github/workflows/_detect-changes.yml
 
+  test:
+    name: Unit Test
+    needs: detect-changes
+    if: needs.detect-changes.outputs.has_changes == 'true'
+    uses: ./.github/workflows/_unit-test.yml
+    with:
+      services: ${{ needs.detect-changes.outputs.services }}
+    secrets: inherit
+
   build-and-push:
     name: Build & Scan
-    needs: detect-changes
+    needs: [detect-changes, test]
     if: needs.detect-changes.outputs.has_changes == 'true'
     uses: ./.github/workflows/_build-service.yml
     with:

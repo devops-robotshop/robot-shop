@@ -1,0 +1,67 @@
+name: Unit Test
+
+on:
+  workflow_call:
+    inputs:
+      services:
+        required: true
+        type: string
+
+jobs:
+  test:
+    name: Test ${{ matrix.service }}
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        service: ${{ fromJson(inputs.services) }}
+
+    steps:
+      - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5
+
+      # Node.js services: cart, catalogue, user
+      - name: Setup Node.js
+        if: contains('["cart","catalogue","user"]', matrix.service)
+        uses: actions/setup-node@v4
+        with:
+          node-version: '18'
+          cache: 'npm'
+          cache-dependency-path: ${{ matrix.service }}/package-lock.json
+
+      - name: Run Node.js tests
+        if: contains('["cart","catalogue","user"]', matrix.service)
+        run: |
+          cd ${{ matrix.service }}
+          npm ci --ignore-scripts
+          npm test -- --coverage --coverageReporters=text
+
+      # Java service: shipping
+      - name: Setup Java
+        if: matrix.service == 'shipping'
+        uses: actions/setup-java@v4
+        with:
+          java-version: '17'
+          distribution: 'temurin'
+          cache: 'maven'
+
+      - name: Run Java tests
+        if: matrix.service == 'shipping'
+        run: |
+          cd shipping
+          mvn test --no-transfer-progress
+
+      # Python service: payment
+      - name: Setup Python
+        if: matrix.service == 'payment'
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+          cache: 'pip'
+
+      - name: Run Python tests
+        if: matrix.service == 'payment'
+        run: |
+          cd payment
+          pip install -r requirements.txt
+          pip install pytest pytest-cov
+          pytest test_payment.py -v --tb=short
