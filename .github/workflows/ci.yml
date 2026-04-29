@@ -1,0 +1,74 @@
+name: CI/CD Pipeline - Robot Shop
+
+on:
+  push:
+    branches: [master, develop]
+    paths-ignore:
+      - 'README.md'
+      - 'docs/**'
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  PROJECT_ID: project-669c83f6-d64c-4648-b15
+  REGION: asia-southeast1
+  REGISTRY: asia-southeast1-docker.pkg.dev
+  REPO: robot-shop
+
+jobs:
+  secret-scan:
+    name: Secret Scan
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5
+        with:
+          fetch-depth: 0
+
+      - name: Cache Gitleaks binary
+        id: cache-gitleaks
+        uses: actions/cache@v4
+        with:
+          path: ./gitleaks
+          key: gitleaks-8.18.4
+
+      - name: Download Gitleaks
+        if: steps.cache-gitleaks.outputs.cache-hit != 'true'
+        run: |
+          curl -sSL https://github.com/gitleaks/gitleaks/releases/download/v8.18.4/gitleaks_8.18.4_linux_x64.tar.gz | tar -xz
+
+      - name: Gitleaks Secret Scan
+        run: ./gitleaks detect --source . --verbose --redact
+
+  detect-changes:
+    name: Detect Changes
+    uses: ./.github/workflows/_detect-changes.yml
+
+  build-and-push:
+    name: Build & Scan
+    needs: detect-changes
+    if: needs.detect-changes.outputs.has_changes == 'true'
+    uses: ./.github/workflows/_build-service.yml
+    with:
+      services: ${{ needs.detect-changes.outputs.services }}
+      has_changes: ${{ needs.detect-changes.outputs.has_changes == 'true' }}
+    secrets: inherit
+
+  update-manifest:
+    name: Update Manifest (GitOps)
+    needs: build-and-push
+    uses: ./.github/workflows/_update-manifest.yml
+    permissions:
+      contents: write
+
+  verify-deployment:
+    name: Verify Deploy
+    needs: [detect-changes, build-and-push, update-manifest]
+    if: always() && needs.detect-changes.outputs.has_changes == 'true' && needs.build-and-push.result == 'success'
+    uses: ./.github/workflows/_verify-deploy.yml
+    with:
+      has_changes: ${{ needs.detect-changes.outputs.has_changes == 'true' }}
+    secrets: inherit

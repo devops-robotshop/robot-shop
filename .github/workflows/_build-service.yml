@@ -1,0 +1,122 @@
+name: Build & Scan Service
+
+on:
+  workflow_call:
+    inputs:
+      services:
+        required: true
+        type: string
+      has_changes:
+        required: true
+        type: boolean
+
+env:
+  PROJECT_ID: project-669c83f6-d64c-4648-b15
+  REGION: asia-southeast1
+  REGISTRY: asia-southeast1-docker.pkg.dev
+  REPO: robot-shop
+
+jobs:
+  build-and-push:
+    name: Build & Scan
+    if: ${{ inputs.has_changes }}
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      id-token: write
+    strategy:
+      fail-fast: false
+      matrix:
+        service: ${{ fromJson(inputs.services) }}
+
+    steps:
+      - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5
+
+      - name: Checkov Scan (Block on HIGH/CRITICAL)
+        uses: bridgecrewio/checkov-action@master
+        with:
+          directory: ./${{ matrix.service }}
+          framework: dockerfile
+          soft_fail: false
+
+      - name: Auth to GCP
+        id: auth
+        uses: google-github-actions/auth@c200f3691d83b41bf9bbd8638997a462592937ed
+        with:
+          workload_identity_provider: "projects/460877708164/locations/global/workloadIdentityPools/github-pool/providers/github-provider"
+          service_account: "robot-shop-gsa@project-669c83f6-d64c-4648-b15.iam.gserviceaccount.com"
+          token_format: "access_token"
+
+      - name: Setup Buildx
+        uses: docker/setup-buildx-action@8d2750c68a42422c14e847fe6c8ac0403b4cbd6f
+
+      - name: Docker login
+        uses: docker/login-action@c94ce9fb468520275223c153574b00df6fe4bcc9
+        with:
+          registry: ${{ env.REGION }}-docker.pkg.dev
+          username: oauth2accesstoken
+          password: ${{ steps.auth.outputs.access_token }}
+
+      - name: SonarCloud Scan
+        uses: SonarSource/sonarqube-scan-action@v5.0.0
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+        with:
+          projectBaseDir: ./${{ matrix.service }}
+          args: >
+            -Dsonar.organization=devops-robotshop
+            -Dsonar.projectKey=devops-robotshop_robot-shop
+
+      - name: SonarCloud Quality Gate
+        uses: sonarsource/sonarqube-quality-gate-action@master
+        timeout-minutes: 5
+        env:
+          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+        with:
+          scanMetadataReportFile: ./${{ matrix.service }}/.scannerwork/report-task.txt
+
+      - name: Build & Push
+        uses: docker/build-push-action@ca052bb54ab0790a636c9b5f226502c73d547a25
+        with:
+          context: ./${{ matrix.service }}
+          push: true
+          tags: |
+            ${{ env.REGISTRY }}/${{ env.PROJECT_ID }}/${{ env.REPO }}/${{ matrix.service }}:${{ github.sha }}
+            ${{ env.REGISTRY }}/${{ env.PROJECT_ID }}/${{ env.REPO }}/${{ matrix.service }}:latest
+          labels: |
+            org.opencontainers.image.revision=${{ github.sha }}
+            org.opencontainers.image.created=${{ github.event.head_commit.timestamp }}
+            org.opencontainers.image.source=https://github.com/${{ github.repository }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
+      # Report HIGH only
+      - name: Trivy HIGH (report)
+        uses: aquasecurity/trivy-action@6e7b7d1fd3e4fef0c5fa8cce1229c54b2c9bd0d8
+        with:
+          image-ref: ${{ env.REGISTRY }}/${{ env.PROJECT_ID }}/${{ env.REPO }}/${{ matrix.service }}:${{ github.sha }}
+          format: table
+          exit-code: 0
+          ignore-unfixed: true
+          severity: HIGH
+
+      # Block on CRITICAL
+      - name: Trivy CRITICAL (fail)
+        uses: aquasecurity/trivy-action@6e7b7d1fd3e4fef0c5fa8cce1229c54b2c9bd0d8
+        with:
+          image-ref: ${{ env.REGISTRY }}/${{ env.PROJECT_ID }}/${{ env.REPO }}/${{ matrix.service }}:${{ github.sha }}
+          format: table
+          exit-code: 1
+          ignore-unfixed: true
+          severity: CRITICAL
+
+      # Save build result
+      - name: Save image tag
+        run: echo "${{ matrix.service }}=${{ github.sha }}" > image.txt
+
+      - name: Upload artifact
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        with:
+          name: image-${{ matrix.service }}
+          path: image.txt

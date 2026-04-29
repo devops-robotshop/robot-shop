@@ -1,0 +1,50 @@
+name: Detect Changes
+
+on:
+  workflow_call:
+    outputs:
+      services:
+        value: ${{ jobs.detect-changes.outputs.services }}
+      has_changes:
+        value: ${{ jobs.detect-changes.outputs.has_changes }}
+
+jobs:
+  detect-changes:
+    name: Detect Changes
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    outputs:
+      services: ${{ steps.set-matrix.outputs.services }}
+      has_changes: ${{ steps.set-matrix.outputs.has_changes }}
+    steps:
+      - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5
+        with:
+          fetch-depth: 0
+
+      - id: set-matrix
+        run: |
+          ALL_APPS=("web" "cart" "catalogue" "dispatch" "payment" "ratings" "shipping" "user")
+          CHANGED_APPS=()
+
+          BASE=${{ github.event.before }}
+          HEAD=${{ github.sha }}
+
+          if [ "$BASE" = "0000000000000000000000000000000000000000" ]; then
+            BASE=$(git rev-parse HEAD~1)
+          fi
+
+          for app in "${ALL_APPS[@]}"; do
+            if git diff --name-only $BASE $HEAD | grep -q "^${app}/"; then
+              CHANGED_APPS+=("\"${app}\"")
+            fi
+          done
+
+          if [ ${#CHANGED_APPS[@]} -eq 0 ]; then
+            echo "services=[]" >> $GITHUB_OUTPUT
+            echo "has_changes=false" >> $GITHUB_OUTPUT
+          else
+            JSON_ARRAY=$(printf ",%s" "${CHANGED_APPS[@]}")
+            echo "services=[${JSON_ARRAY:1}]" >> $GITHUB_OUTPUT
+            echo "has_changes=true" >> $GITHUB_OUTPUT
+          fi
