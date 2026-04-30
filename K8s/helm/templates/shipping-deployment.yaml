@@ -32,11 +32,19 @@ spec:
             cpu: 100m
             memory: 500Mi
 
+        startupProbe:
+          httpGet:
+            path: /health
+            port: 8080
+          initialDelaySeconds: 60
+          periodSeconds: 10
+          failureThreshold: 20
+
         readinessProbe:
           httpGet:
             path: /health
             port: 8080
-          initialDelaySeconds: 40
+          initialDelaySeconds: 60
           periodSeconds: 5
           failureThreshold: 5
 
@@ -44,7 +52,7 @@ spec:
           httpGet:
             path: /health
             port: 8080
-          initialDelaySeconds: 80
+          initialDelaySeconds: 90
           periodSeconds: 10
           failureThreshold: 5
 
