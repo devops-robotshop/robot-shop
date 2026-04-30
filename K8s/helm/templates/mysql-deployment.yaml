@@ -21,12 +21,15 @@ spec:
       - name: mysql
         image: {{ .Values.image.repo }}/rs-mysql-db:{{ .Values.image.version }}
         imagePullPolicy: {{ .Values.image.pullPolicy }}
+
         # added for Istio
         securityContext:
           capabilities:
             add: ["NET_ADMIN"]
+
         ports:
         - containerPort: 3306
+
         resources:
           limits:
             cpu: 200m
@@ -34,27 +37,40 @@ spec:
           requests:
             cpu: 100m
             memory: 700Mi
+
+        startupProbe:
+          tcpSocket:
+            port: 3306
+          initialDelaySeconds: 30
+          periodSeconds: 10
+          failureThreshold: 10
+
         readinessProbe:
           tcpSocket:
             port: 3306
-          initialDelaySeconds: 60
+          initialDelaySeconds: 30
           periodSeconds: 5
-          failureThreshold: 3
+          failureThreshold: 5
+
         livenessProbe:
           tcpSocket:
             port: 3306
-          initialDelaySeconds: 120
+          initialDelaySeconds: 90
           periodSeconds: 10
-          failureThreshold: 3
+          failureThreshold: 5
+
       restartPolicy: Always
+
       {{- with .Values.mysql.affinity }}
       affinity:
         {{- toYaml . | nindent 8 }}
       {{- end }}
+
       {{- with .Values.mysql.nodeSelector }}
       nodeSelector:
         {{- toYaml . | nindent 8 }}
       {{- end }}
+
       {{- with .Values.mysql.tolerations }}
       tolerations:
         {{- toYaml . | nindent 8 }}

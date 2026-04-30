@@ -22,7 +22,6 @@ spec:
         image: {{ .Values.image.repo }}/rs-dispatch:{{ .Values.image.version }}
         imagePullPolicy: {{ .Values.image.pullPolicy }}
         env:
-          # agent networking access
           - name: INSTANA_AGENT_HOST
             valueFrom:
               fieldRef:
@@ -34,18 +33,6 @@ spec:
           requests:
             cpu: 100m
             memory: 50Mi
-        readinessProbe:
-          tcpSocket:
-            port: 8080
-          initialDelaySeconds: 10
-          periodSeconds: 5
-          failureThreshold: 3
-        livenessProbe:
-          tcpSocket:
-            port: 8080
-          initialDelaySeconds: 15
-          periodSeconds: 10
-          failureThreshold: 3
       restartPolicy: Always
       {{- with .Values.dispatch.affinity }}
       affinity:

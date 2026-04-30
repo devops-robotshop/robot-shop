@@ -22,7 +22,6 @@ spec:
         image: {{ .Values.image.repo }}/rs-user:{{ .Values.image.version }}
         imagePullPolicy: {{ .Values.image.pullPolicy }}
         env:
-          # agent networking access
           - name: INSTANA_AGENT_HOST
             valueFrom:
               fieldRef:
@@ -36,30 +35,21 @@ spec:
           requests:
             cpu: 100m
             memory: 50Mi
+
         readinessProbe:
           httpGet:
             path: /health
             port: 8080
-          initialDelaySeconds: 10
+          initialDelaySeconds: 30
           periodSeconds: 5
-          failureThreshold: 3
+          failureThreshold: 5
+
         livenessProbe:
           httpGet:
             path: /health
             port: 8080
-          initialDelaySeconds: 15
+          initialDelaySeconds: 60
           periodSeconds: 10
-          failureThreshold: 3
+          failureThreshold: 5
+
       restartPolicy: Always
-      {{- with .Values.user.affinity }}
-      affinity:
-        {{- toYaml . | nindent 8 }}
-      {{- end }}
-      {{- with .Values.user.nodeSelector }}
-      nodeSelector:
-        {{- toYaml . | nindent 8 }}
-      {{- end }}
-      {{- with .Values.user.tolerations }}
-      tolerations:
-        {{- toYaml . | nindent 8 }}
-      {{- end }}

@@ -13,17 +13,16 @@ spec:
     metadata:
       labels:
         service: rabbitmq
+      annotations:
+        sidecar.istio.io/rewriteAppHTTPProbers: "true"
     spec:
-      {{ if .Values.psp.enabled }}
-      serviceAccountName: robot-shop
-      {{ end }}
       containers:
       - name: rabbitmq
         image: rabbitmq:3-management-alpine
-        imagePullPolicy: {{ .Values.image.pullPolicy }}
         ports:
-        - containerPort: 5672
-        - containerPort: 15672
+        - containerPort: 5672  
+        - containerPort: 15672 
+
         resources:
           limits:
             cpu: 200m
@@ -31,28 +30,21 @@ spec:
           requests:
             cpu: 100m
             memory: 256Mi
+
         readinessProbe:
-          tcpSocket:
-            port: 5672
-          initialDelaySeconds: 10
-          periodSeconds: 5
-          failureThreshold: 3
-        livenessProbe:
-          tcpSocket:
-            port: 5672
-          initialDelaySeconds: 15
+          httpGet:
+            path: /api/health/checks/alarms
+            port: 15672
+          initialDelaySeconds: 30
           periodSeconds: 10
-          failureThreshold: 3
+          failureThreshold: 5
+
+        livenessProbe:
+          httpGet:
+            path: /api/health/checks/alarms
+            port: 15672
+          initialDelaySeconds: 60
+          periodSeconds: 20
+          failureThreshold: 5
+
       restartPolicy: Always
-      {{- with .Values.rabbitmq.affinity }}
-      affinity:
-        {{- toYaml . | nindent 8 }}
-      {{- end }}
-      {{- with .Values.rabbitmq.nodeSelector }}
-      nodeSelector:
-        {{- toYaml . | nindent 8 }}
-      {{- end }}
-      {{- with .Values.rabbitmq.tolerations }}
-      tolerations:
-        {{- toYaml . | nindent 8 }}
-      {{- end }}
