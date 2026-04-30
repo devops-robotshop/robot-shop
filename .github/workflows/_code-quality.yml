@@ -1,0 +1,88 @@
+name: Code Quality
+
+on:
+  workflow_call:
+    inputs:
+      services:
+        required: true
+        type: string
+    secrets:
+      SONAR_TOKEN:
+        required: true
+
+jobs:
+  code-quality:
+    name: Test & Scan ${{ matrix.service }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    strategy:
+      fail-fast: false
+      matrix:
+        service: ${{ fromJson(inputs.services) }}
+
+    steps:
+      - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5
+
+      # Node.js: cart, catalogue, user
+      - name: Setup Node.js
+        if: contains('["cart","catalogue","user"]', matrix.service)
+        uses: actions/setup-node@v4
+        with:
+          node-version: '18'
+          cache: 'npm'
+          cache-dependency-path: ${{ matrix.service }}/package-lock.json
+
+      - name: Run Node.js tests + coverage
+        if: contains('["cart","catalogue","user"]', matrix.service)
+        run: |
+          cd ${{ matrix.service }}
+          npm ci --ignore-scripts
+          npm test -- --coverage --coverageReporters=lcov
+
+      # Java: shipping
+      - name: Setup Java
+        if: matrix.service == 'shipping'
+        uses: actions/setup-java@v4
+        with:
+          java-version: '17'
+          distribution: 'temurin'
+          cache: 'maven'
+
+      - name: Run Java tests + coverage
+        if: matrix.service == 'shipping'
+        run: |
+          cd shipping
+          mvn test jacoco:report --no-transfer-progress
+
+      # Python: payment
+      - name: Setup Python
+        if: matrix.service == 'payment'
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+          cache: 'pip'
+
+      - name: Run Python tests + coverage
+        if: matrix.service == 'payment'
+        run: |
+          cd payment
+          pip install -r requirements.txt pytest pytest-cov
+          pytest test_payment.py --cov=payment --cov-report=xml
+
+      # SonarCloud Scan (KHÔNG CÓ QUALITY GATE)
+      - name: SonarCloud Scan
+        uses: SonarSource/sonarqube-scan-action@v5.0.0
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+        with:
+          projectBaseDir: ./${{ matrix.service }}
+          args: >
+            -Dsonar.organization=devops-robotshop
+            -Dsonar.projectKey=devops-robotshop_robot-shop-${{ matrix.service }}
+            -Dsonar.java.binaries=target/classes
+            -Dsonar.javascript.lcov.reportPaths=coverage/lcov.info
+            -Dsonar.python.coverage.reportPaths=coverage.xml
+            -Dsonar.java.coveragePlugin=jacoco
+            -Dsonar.coverage.jacoco.xmlReportPaths=target/site/jacoco/jacoco.xml
+            -Dsonar.exclusions=coverage/**,**/*.test.js,**/test_*.py
