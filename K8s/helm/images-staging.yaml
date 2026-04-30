@@ -3,7 +3,7 @@ web:
   tag: latest
 cart:
   image: asia-southeast1-docker.pkg.dev/project-669c83f6-d64c-4648-b15/robot-shop/cart
-  tag: latest
+  tag: 6500ee19247e0cfb8fd14728c41fc0e5623682e2
 catalogue:
   image: asia-southeast1-docker.pkg.dev/project-669c83f6-d64c-4648-b15/robot-shop/catalogue
   tag: latest
