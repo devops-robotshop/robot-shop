@@ -11,6 +11,7 @@ jobs:
   verify-deployment:
     name: Verify Deploy
     runs-on: ubuntu-latest
+    timeout-minutes: 15
 
     steps:
       - name: Cache ArgoCD CLI

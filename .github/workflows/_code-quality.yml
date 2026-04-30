@@ -22,7 +22,8 @@ jobs:
 
     steps:
       - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5
-
+        with:
+          fetch-depth: 0
       # Node.js: cart, catalogue, user
       - name: Setup Node.js
         if: contains('["cart","catalogue","user"]', matrix.service)

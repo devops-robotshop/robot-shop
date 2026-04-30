@@ -34,7 +34,7 @@ jobs:
       - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5
 
       - name: Checkov Scan (Block on HIGH/CRITICAL)
-        uses: bridgecrewio/checkov-action@master
+        uses: bridgecrewio/checkov-action@v3
         with:
           directory: ./${{ matrix.service }}
           framework: dockerfile
