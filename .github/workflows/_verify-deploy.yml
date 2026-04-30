@@ -16,7 +16,7 @@ jobs:
     steps:
       - name: Cache ArgoCD CLI
         id: cache-argocd
-        uses: actions/cache@v4
+        uses: actions/cache@0057852bfaa89a56745cba8c7296529d2fc39830
         with:
           path: /usr/local/bin/argocd
           key: argocd-v2.13.3
