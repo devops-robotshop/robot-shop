@@ -32,26 +32,23 @@ spec:
             memory: 256Mi
 
         startupProbe:
-          httpGet:
-            path: /api/health/checks/alarms
-            port: 15672
-          initialDelaySeconds: 60
+          tcpSocket:
+            port: 5672
+          initialDelaySeconds: 30
           periodSeconds: 10
           failureThreshold: 20
 
         readinessProbe:
-          httpGet:
-            path: /api/health/checks/alarms
-            port: 15672
-          initialDelaySeconds: 60
+          tcpSocket:
+            port: 5672
+          initialDelaySeconds: 30
           periodSeconds: 10
           failureThreshold: 5
-
+          
         livenessProbe:
-          httpGet:
-            path: /api/health/checks/alarms
-            port: 15672
-          initialDelaySeconds: 90
+          tcpSocket:
+            port: 5672
+          initialDelaySeconds: 60
           periodSeconds: 20
           failureThreshold: 5
 
