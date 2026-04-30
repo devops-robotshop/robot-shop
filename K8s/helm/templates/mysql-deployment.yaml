@@ -37,13 +37,13 @@ spec:
         readinessProbe:
           tcpSocket:
             port: 3306
-          initialDelaySeconds: 10
+          initialDelaySeconds: 60
           periodSeconds: 5
           failureThreshold: 3
         livenessProbe:
           tcpSocket:
             port: 3306
-          initialDelaySeconds: 15
+          initialDelaySeconds: 120
           periodSeconds: 10
           failureThreshold: 3
       restartPolicy: Always
