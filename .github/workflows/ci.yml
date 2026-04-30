@@ -2,7 +2,7 @@ name: CI/CD Pipeline - Robot Shop
 
 on:
   push:
-    branches: [master, develop]
+    branches: [master, feature/*]
     paths-ignore:
       - 'README.md'
       - 'docs/**'
