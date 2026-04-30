@@ -6,6 +6,9 @@ on:
       has_changes:
         required: true
         type: boolean
+      ref_name:
+        required: true
+        type: string
 
 jobs:
   verify-deployment:
@@ -32,13 +35,18 @@ jobs:
           ARGOCD_SERVER: ${{ secrets.ARGOCD_SERVER }}
           ARGOCD_AUTH_TOKEN: ${{ secrets.ARGOCD_AUTH_TOKEN }}
         run: |
+          if [ "${{ inputs.ref_name }}" = "master" ]; then
+            APP="robot-shop"
+          else
+            APP="robot-shop-staging"
+          fi
+
           for i in 1 2 3; do
-            echo "Attempt $i..."
-            argocd app wait robot-shop \
+            echo "Attempt $i... checking $APP"
+            argocd app wait $APP \
               --server $ARGOCD_SERVER \
               --auth-token $ARGOCD_AUTH_TOKEN \
               --insecure --grpc-web --health --timeout 300 && exit 0
-
             [ $i -lt 3 ] && sleep 20
           done
           exit 1

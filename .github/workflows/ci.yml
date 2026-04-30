@@ -84,4 +84,5 @@ jobs:
     uses: ./.github/workflows/_verify-deploy.yml
     with:
       has_changes: ${{ needs.detect-changes.outputs.has_changes == 'true' }}
+      ref_name: ${{ github.ref_name }}
     secrets: inherit
