@@ -3,22 +3,22 @@ web:
   tag: 9ecfbbfe7a21c551c97d219aac6c1f6067328014
 cart:
   image: asia-southeast1-docker.pkg.dev/project-669c83f6-d64c-4648-b15/robot-shop/cart
-  tag: "a4d9a9aa2b703844c6cb3c26f73c567f7c0e282b"
+  tag: "1aff7495a295c9b8397237624c85857b580da0cf"
 catalogue:
   image: asia-southeast1-docker.pkg.dev/project-669c83f6-d64c-4648-b15/robot-shop/catalogue
-  tag: "a4d9a9aa2b703844c6cb3c26f73c567f7c0e282b"
+  tag: "1aff7495a295c9b8397237624c85857b580da0cf"
 dispatch:
   image: asia-southeast1-docker.pkg.dev/project-669c83f6-d64c-4648-b15/robot-shop/dispatch
   tag: "c5036ba8a4bf8050eda5834535f63df394291205"
 payment:
   image: asia-southeast1-docker.pkg.dev/project-669c83f6-d64c-4648-b15/robot-shop/payment
-  tag: "a4d9a9aa2b703844c6cb3c26f73c567f7c0e282b"
+  tag: "1aff7495a295c9b8397237624c85857b580da0cf"
 ratings:
   image: asia-southeast1-docker.pkg.dev/project-669c83f6-d64c-4648-b15/robot-shop/ratings
   tag: "9ecfbbfe7a21c551c97d219aac6c1f6067328014"
 shipping:
   image: asia-southeast1-docker.pkg.dev/project-669c83f6-d64c-4648-b15/robot-shop/shipping
-  tag: "a4d9a9aa2b703844c6cb3c26f73c567f7c0e282b"
+  tag: "1aff7495a295c9b8397237624c85857b580da0cf"
 user:
   image: asia-southeast1-docker.pkg.dev/project-669c83f6-d64c-4648-b15/robot-shop/user
-  tag: "a4d9a9aa2b703844c6cb3c26f73c567f7c0e282b"
+  tag: "1aff7495a295c9b8397237624c85857b580da0cf"
