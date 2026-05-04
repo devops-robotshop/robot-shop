@@ -4,7 +4,7 @@
   "description": "user REST API",
   "main": "server.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "test": "jest --coverage"
   },
   "author": "SteveW",
   "license": "Apache-2.0",
@@ -17,6 +17,17 @@
       "express-pino-logger": "^4.0.0",
       "pino-pretty": "^2.5.0",
       "@instana/collector": "^1.132.2"
+  },
+  "devDependencies": {
+    "jest": "^29",
+    "supertest": "^6"
+  },
+  "jest": {
+    "testEnvironment": "node",
+    "collectCoverageFrom": [
+      "validators.js"
+    ],
+    "coverageProvider": "v8"
   },
   "overrides": {
     "cross-spawn": "^7.0.5",

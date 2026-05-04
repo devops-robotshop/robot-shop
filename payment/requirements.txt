@@ -5,3 +5,5 @@ pika
 prometheus_client
 opentracing
 instana
+pytest
+pytest-cov

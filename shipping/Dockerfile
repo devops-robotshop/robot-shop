@@ -7,7 +7,7 @@ COPY pom.xml /opt/shipping/
 RUN mvn dependency:go-offline
 
 COPY src /opt/shipping/src/
-RUN mvn clean package -DskipTests
+RUN mvn clean package -DskipTests --no-transfer-progress
 
 # Stage 2: Run
 FROM eclipse-temurin:17-jre-alpine
@@ -24,6 +24,8 @@ COPY --from=builder /opt/shipping/target/*.jar shipping.jar
 
 EXPOSE 8080
 USER 1001
-CMD [ "java", "-Xms256m", "-Xmx768m", "-jar", "shipping.jar" ]
 
-#Test pipeline
+HEALTHCHECK --interval=30s --timeout=10s --start-period=30s --retries=3 \
+    CMD wget -qO- http://localhost:8080/health || exit 1
+
+CMD [ "java", "-Xms256m", "-Xmx768m", "-jar", "shipping.jar" ]

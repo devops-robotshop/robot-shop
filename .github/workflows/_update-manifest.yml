@@ -1,0 +1,54 @@
+name: Update Manifest
+
+on:
+  workflow_call:
+
+jobs:
+  update-manifest:
+    name: Update Manifest (GitOps)
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    timeout-minutes: 15
+
+    steps:
+      - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5
+
+      - name: Download artifacts
+        uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093
+        with:
+          path: artifacts
+
+      - name: Merge image tags
+        run: |
+          if [ "${{ github.ref_name }}" = "master" ]; then
+            MANIFEST="K8s/helm/images.yaml"
+          else
+            MANIFEST="K8s/helm/images-staging.yaml"
+          fi
+
+          for file in artifacts/**/image.txt; do
+            while IFS='=' read -r service tag; do
+              echo "Updating $service -> $tag in $MANIFEST"
+              yq -i ".${service}.tag = \"${tag}\"" $MANIFEST
+            done < "$file"
+          done
+
+      - name: Commit & push
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+
+          if [ "${{ github.ref_name }}" = "master" ]; then
+            MANIFEST="K8s/helm/images.yaml"
+          else
+            MANIFEST="K8s/helm/images-staging.yaml"
+          fi
+
+          git add $MANIFEST
+
+          if ! git diff --cached --quiet; then
+            git commit -m "ci: update image tags [${{ github.ref_name }}] [skip ci]"
+            git pull --rebase origin ${{ github.ref_name }}
+            git push
+          fi

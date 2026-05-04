@@ -28,8 +28,20 @@ spec:
             cpu: 200m
             memory: 200Mi
           requests:
-            cpu: 100m
+            cpu: 50m
             memory: 100Mi
+        readinessProbe:
+          tcpSocket:
+            port: 27017
+          initialDelaySeconds: 10
+          periodSeconds: 5
+          failureThreshold: 3
+        livenessProbe:
+          tcpSocket:
+            port: 27017
+          initialDelaySeconds: 15
+          periodSeconds: 10
+          failureThreshold: 3
       restartPolicy: Always
       {{- with .Values.mongodb.affinity }}
       affinity:

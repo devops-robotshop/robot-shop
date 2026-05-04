@@ -1,0 +1,12 @@
+title = "Gitleaks Configuration"
+
+[allowlist]
+  description = "Allow known GCP resource identifiers misidentified as secrets"
+  regexes = [
+    # GCP Workload Identity Pool path — not a secret
+    '''projects/\d+/locations/global/workloadIdentityPools/[\w-]+/providers/[\w-]+''',
+    # GCP Service Account email — not a secret  
+    '''[\w-]+@[\w-]+\.iam\.gserviceaccount\.com''',
+    # Instana legacy config from original repo
+    '''instana/instana-agent-private\.yml'''
+  ]

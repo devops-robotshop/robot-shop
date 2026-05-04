@@ -10,11 +10,8 @@ WORKDIR /opt/server
 
 COPY package*.json /opt/server/
 
-RUN npm ci --omit=dev
+RUN npm ci --omit=dev --ignore-scripts
 
 COPY server.js /opt/server/
 
 CMD ["node", "server.js"]
-
-#Test pipeline
-#test
