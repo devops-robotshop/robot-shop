@@ -3,22 +3,22 @@ web:
   tag: latest
 cart:
   image: asia-southeast1-docker.pkg.dev/project-669c83f6-d64c-4648-b15/robot-shop/cart
-  tag: latest
+  tag: fb02f73fef77ca46dc5050fe30ade394a9688d90
 catalogue:
   image: asia-southeast1-docker.pkg.dev/project-669c83f6-d64c-4648-b15/robot-shop/catalogue
-  tag: latest
+  tag: fb02f73fef77ca46dc5050fe30ade394a9688d90
 dispatch:
   image: asia-southeast1-docker.pkg.dev/project-669c83f6-d64c-4648-b15/robot-shop/dispatch
   tag: latest
 payment:
   image: asia-southeast1-docker.pkg.dev/project-669c83f6-d64c-4648-b15/robot-shop/payment
-  tag: latest
+  tag: fb02f73fef77ca46dc5050fe30ade394a9688d90
 ratings:
   image: asia-southeast1-docker.pkg.dev/project-669c83f6-d64c-4648-b15/robot-shop/ratings
   tag: latest
 shipping:
   image: asia-southeast1-docker.pkg.dev/project-669c83f6-d64c-4648-b15/robot-shop/shipping
-  tag: latest
+  tag: fb02f73fef77ca46dc5050fe30ade394a9688d90
 user:
   image: asia-southeast1-docker.pkg.dev/project-669c83f6-d64c-4648-b15/robot-shop/user
-  tag: latest
+  tag: fb02f73fef77ca46dc5050fe30ade394a9688d90
