@@ -15,3 +15,4 @@ RUN npm ci --omit=dev --ignore-scripts
 COPY server.js /opt/server/
 
 CMD ["node", "server.js"]
+#test
