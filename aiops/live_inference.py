@@ -8,9 +8,9 @@ from datetime import datetime
 # ==================================================
 # 1. CẤU HÌNH KẾT NỐI
 # ==================================================
-PROMETHEUS_URL = "http://localhost:9090"
-PUSHGATEWAY_URL = "localhost:9091"
-MODEL_PATH = "rf_model"  # Đảm bảo tên file khớp 100%
+PROMETHEUS_URL = "http://kube-prometheus-stack-prometheus.monitoring.svc.cluster.local:9090"
+PUSHGATEWAY_URL = "kube-prometheus-stack-prometheus.monitoring.svc.cluster.local:9091" 
+MODEL_PATH = "rf_model.pkl"  # Đảm bảo tên file khớp 100%
 
 # Load mô hình AI
 print("[Khởi động] Đang tải não bộ AI...")
