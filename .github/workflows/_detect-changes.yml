@@ -24,7 +24,7 @@ jobs:
 
       - id: set-matrix
         run: |
-          ALL_APPS=("web" "cart" "catalogue" "dispatch" "payment" "ratings" "shipping" "user")
+          ALL_APPS=("web" "cart" "catalogue" "dispatch" "payment" "ratings" "shipping" "user" "ai-ops")
           CHANGED_APPS=()
 
           BASE=${{ github.event.before }}
