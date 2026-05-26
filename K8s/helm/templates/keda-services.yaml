@@ -1,8 +1,11 @@
+# ==========================================
+# 1. KEDA AI-DRIVEN SCALER (CHO WEB)
+# ==========================================
 apiVersion: keda.sh/v1alpha1
 kind: ScaledObject
 metadata:
-  name: web-scaler
-  namespace: production
+  name: web-scaler-ai
+  namespace: production 
 spec:
   scaleTargetRef:
     apiVersion: apps/v1
@@ -10,16 +13,20 @@ spec:
     name: web
   minReplicaCount: 1
   maxReplicaCount: 5
+  cooldownPeriod: 60      # Chờ 60s an toàn mới thu hồi Pod
+  pollingInterval: 10     # Cứ 10s hỏi thăm bảng tin 1 lần
   triggers:
   - type: prometheus
     metadata:
-      # KEDA gọi thẳng vào Prometheus qua mạng nội bộ K8s
       serverAddress: http://kube-prometheus-stack-prometheus.monitoring.svc.cluster.local:9090
-      metricName: http_requests_total
-      # Cứ vượt ngưỡng 30 request/giây là tự đẻ thêm Pod
-      threshold: "30"
-      query: sum(rate(http_requests_total{kubernetes_namespace="production", pod=~"web-.*"}[1m]))
+      metricName: ai_predicted_anomaly
+      threshold: "1"      # Cứ AI phán bằng 1 là tự đẻ Pod
+      query: max(ai_predicted_anomaly)
+
 ---
+# ==========================================
+# 2. KEDA RABBITMQ SCALER (CẤU HÌNH ĐÚNG)
+# ==========================================
 apiVersion: keda.sh/v1alpha1
 kind: ScaledObject
 metadata:
@@ -35,8 +42,8 @@ spec:
   triggers:
   - type: rabbitmq
     metadata:
-      # Kết nối vào RabbitMQ nội bộ của Robot Shop (mặc định guest/guest)
-      host: amqp://guest:guest@rabbitmq.production.svc.cluster.local:5672
+      protocol: amqp               
       mode: QueueLength
-      # Nếu hàng đợi có hơn 20 tin nhắn chưa xử lý -> đẻ thêm Pod dispatch
-      value: "20"
+      value: "20"                  
+      queueName: orders            
+      host: amqp://guest:guest@rabbitmq.production.svc.cluster.local:5672

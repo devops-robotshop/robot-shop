@@ -43,7 +43,7 @@ spec:
             port: 3306
           initialDelaySeconds: 60
           periodSeconds: 10
-          failureThreshold: 20
+          failureThreshold: 60
 
         readinessProbe:
           tcpSocket:

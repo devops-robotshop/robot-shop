@@ -1,0 +1,34 @@
+{
+  "run_timestamp": "20260525_162936",
+  "dataset_size": 140,
+  "features": [
+    "cpu_usage",
+    "cpu_delta",
+    "network_rx_rps",
+    "net_delta",
+    "memory_usage_mb",
+    "http_error_rate",
+    "p99_latency_ms",
+    "rabbitmq_queue",
+    "payment_cpu",
+    "restart_rate",
+    "pod_restarts_5m"
+  ],
+  "n_features": 11,
+  "cv_f1_mean": 0.9167,
+  "cv_f1_std": 0.1031,
+  "validation": {
+    "split": "Validation (real)",
+    "accuracy": 0.9286,
+    "precision": 0.9318,
+    "recall": 0.9286,
+    "f1": 0.9284
+  },
+  "test": {
+    "split": "Test       (real)",
+    "accuracy": 0.9286,
+    "precision": 0.9321,
+    "recall": 0.9286,
+    "f1": 0.9285
+  }
+}
