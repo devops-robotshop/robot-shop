@@ -23,7 +23,5 @@ user:
   image: asia-southeast1-docker.pkg.dev/project-669c83f6-d64c-4648-b15/robot-shop/user
   tag: latest
 aiops:
-  image: asia-southeast1-docker.pkg.dev/project-669c83f6-d64c-4648-b15/robot-shop/aiops-inference
+  image: asia-southeast1-docker.pkg.dev/project-669c83f6-d64c-4648-b15/robot-shop/aiops
   tag: latest
-ai-ops:
-  tag: 0a18c111ab750f8ecc7dfd25bc070fa57920f8a6
