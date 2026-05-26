@@ -24,4 +24,4 @@ user:
   tag: latest
 aiops:
   image: asia-southeast1-docker.pkg.dev/project-669c83f6-d64c-4648-b15/robot-shop/aiops
-  tag: latest
+  tag: fa2a51efe54f3698259cdd711fc1437cb27a47a8
