@@ -18,7 +18,7 @@ ratings:
   tag: "9ecfbbfe7a21c551c97d219aac6c1f6067328014"
 shipping:
   image: asia-southeast1-docker.pkg.dev/project-669c83f6-d64c-4648-b15/robot-shop/shipping
-  tag: "1aff7495a295c9b8397237624c85857b580da0cf"
+  tag: "4f9247ce09f47a5b9fe215fbb37c00a01cfd9bb9"
 user:
   image: asia-southeast1-docker.pkg.dev/project-669c83f6-d64c-4648-b15/robot-shop/user
   tag: "1aff7495a295c9b8397237624c85857b580da0cf"
