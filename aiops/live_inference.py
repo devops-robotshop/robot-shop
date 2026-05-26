@@ -10,7 +10,7 @@ from datetime import datetime
 # ==================================================
 PROMETHEUS_URL = "http://kube-prometheus-stack-prometheus.monitoring.svc.cluster.local:9090"
 PUSHGATEWAY_URL = "kube-prometheus-stack-prometheus.monitoring.svc.cluster.local:9091" 
-MODEL_PATH = "rf_model"  # Đảm bảo tên file khớp 100%
+MODEL_PATH = "rf_model.pkl"  # Đảm bảo tên file khớp 100%
 
 # Load mô hình AI
 print("[Khởi động] Đang tải não bộ AI...")
