@@ -25,8 +25,7 @@ shipping:
   tag: fb02f73fef77ca46dc5050fe30ade394a9688d90
 user:
   image: asia-southeast1-docker.pkg.dev/project-669c83f6-d64c-4648-b15/robot-shop/user
-<<<<<<< HEAD
-  tag: fb02f73fef77ca46dc5050fe30ade394a9688d90
-=======
   tag: latest
->>>>>>> 0f7c4625fef883f88ec000b4286b03a8259d14bb
+aiops:
+  image: asia-southeast1-docker.pkg.dev/project-669c83f6-d64c-4648-b15/robot-shop/aiops-inference
+  tag: latest

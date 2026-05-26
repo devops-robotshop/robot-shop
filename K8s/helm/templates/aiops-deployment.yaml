@@ -1,0 +1,60 @@
+---
+# 1. KHỞI TẠO POD CHẠY CODE AI
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: aiops-inference
+  labels:
+    app: aiops-inference
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: aiops-inference
+  template:
+    metadata:
+      labels:
+        app: aiops-inference
+    spec:
+      containers:
+      - name: aiops-inference
+        image: "{{ .Values.aiops.image }}:{{ .Values.aiops.tag }}"
+        imagePullPolicy: Always
+        ports:
+        - containerPort: 8000
+        resources:
+          requests:
+            cpu: 50m
+            memory: 100Mi
+
+---
+# 2. TẠO CÁNH CỬA (SERVICE) CHO PROMETHEUS VÀO
+apiVersion: v1
+kind: Service
+metadata:
+  name: aiops-inference
+  labels:
+    app: aiops-inference
+spec:
+  ports:
+  - port: 8000
+    targetPort: 8000
+    name: metrics
+  selector:
+    app: aiops-inference
+
+---
+# 3. KÊU GỌI PROMETHEUS MỖI 15S VÀO LẤY DATA (SERVICEMONITOR)
+apiVersion: monitoring.coreos.com/v1
+kind: ServiceMonitor
+metadata:
+  name: aiops-inference-monitor
+  labels:
+    release: kube-prometheus-stack
+spec:
+  selector:
+    matchLabels:
+      app: aiops-inference
+  endpoints:
+  - port: metrics
+    interval: 15s
