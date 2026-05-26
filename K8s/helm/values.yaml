@@ -64,7 +64,7 @@ user: {}
 web: {}
 
 aiops:
-  image: asia-southeast1-docker.pkg.dev/project-669c83f6-d64c-4648-b15/robot-shop/aiops-inference
+  image: asia-southeast1-docker.pkg.dev/project-669c83f6-d64c-4648-b15/robot-shop/aiops
   tag: latest
 
 # KEDA và HPA thường không cần image riêng, nhưng nếu bạn cần bật/tắt chúng
