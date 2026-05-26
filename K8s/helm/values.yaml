@@ -62,3 +62,15 @@ shipping: {}
 user: {}
 
 web: {}
+
+aiops:
+  image: asia-southeast1-docker.pkg.dev/project-669c83f6-d64c-4648-b15/robot-shop/aiops-inference
+  tag: latest
+
+# KEDA và HPA thường không cần image riêng, nhưng nếu bạn cần bật/tắt chúng
+# thì nên thêm biến này để điều khiển trong template:
+keda:
+  enabled: true
+
+hpa:
+  enabled: true
